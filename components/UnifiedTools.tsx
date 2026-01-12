@@ -1,17 +1,34 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sliders, Music, Video, DollarSign, Megaphone, BarChart2, Globe, Layers, Wand2, Plus, Twitch, Key, ShieldCheck, RefreshCw, ExternalLink, Activity, Users, Star, Gift, Settings } from 'lucide-react';
 import AudioLab from './AudioLab';
 import RevenueHub from './RevenueHub';
 import UplinkPro from './UplinkPro';
 import GlobalSync from './GlobalSync';
 import Analytics from './Analytics';
+import twitchAuthService from '../services/twitchAuthService';
+import { TwitchUser } from '../types/twitch';
 
 const UnifiedTools: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isTwitchConnecting, setIsTwitchConnecting] = useState(false);
-  const [isTwitchLinked, setIsTwitchLinked] = useState(() => localStorage.getItem('twitch_linked') === 'true');
+  const [isTwitchLinked, setIsTwitchLinked] = useState(false);
+  const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
   
+  useEffect(() => {
+    checkTwitchAuth();
+  }, []);
+
+  const checkTwitchAuth = async () => {
+    const isAuth = twitchAuthService.isAuthenticated();
+    setIsTwitchLinked(isAuth);
+    
+    if (isAuth) {
+      const user = await twitchAuthService.getCurrentUser();
+      setTwitchUser(user);
+    }
+  };
+
   const tools = [
     { id: 'twitch', title: 'Twitch Bridge', icon: Twitch, desc: 'Real-time API & Embed Sync', color: 'text-purple-400', bg: 'bg-purple-500/10' },
     { id: 'audio', title: 'Audio Lab', icon: Sliders, desc: 'Live Visualizer & DSP', color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -22,13 +39,14 @@ const UnifiedTools: React.FC = () => {
   ];
 
   const handleTwitchLink = () => {
-    setIsTwitchConnecting(true);
-    setTimeout(() => {
-        setIsTwitchConnecting(false);
-        setIsTwitchLinked(true);
-        localStorage.setItem('twitch_linked', 'true');
-        window.dispatchEvent(new Event('storage'));
-    }, 1500);
+    const authUrl = twitchAuthService.getAuthUrl();
+    window.location.href = authUrl;
+  };
+
+  const handleTwitchDisconnect = () => {
+    twitchAuthService.clearTokens();
+    setIsTwitchLinked(false);
+    setTwitchUser(null);
   };
 
   const renderToolDetail = () => {
@@ -51,7 +69,7 @@ const UnifiedTools: React.FC = () => {
                         <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white flex items-center gap-4">Twitch Bridge <span className="text-zinc-800 not-italic">v2.1</span></h2>
                     </div>
                     {isTwitchLinked && (
-                        <button className="px-6 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black uppercase text-red-500 hover:bg-red-500 hover:text-white transition-all" onClick={() => {localStorage.removeItem('twitch_linked'); setIsTwitchLinked(false);}}>Disconnect Account</button>
+                        <button className="px-6 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black uppercase text-red-500 hover:bg-red-500 hover:text-white transition-all" onClick={handleTwitchDisconnect}>Disconnect Account</button>
                     )}
                 </header>
 
@@ -71,13 +89,13 @@ const UnifiedTools: React.FC = () => {
                             <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-10 shadow-3xl flex items-center justify-between group">
                                 <div className="flex items-center gap-6">
                                     <div className="w-20 h-20 rounded-2xl bg-[#9146FF] p-1 ring-4 ring-[#9146FF]/10 overflow-hidden">
-                                        <img src="https://picsum.photos/100/100?seed=creator" className="w-full h-full object-cover rounded-xl" alt="avatar" />
+                                        <img src={twitchUser?.profile_image_url || "https://picsum.photos/100/100?seed=creator"} className="w-full h-full object-cover rounded-xl" alt="avatar" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">@nXcor_Creator</h3>
+                                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">@{twitchUser?.display_name || twitchUser?.login || 'Loading...'}</h3>
                                         <div className="flex items-center gap-3">
                                             <div className="px-3 py-1 bg-green-500/10 text-green-500 text-[9px] font-black rounded-lg border border-green-500/20 uppercase tracking-widest">Bridged Active</div>
-                                            <span className="text-[10px] text-zinc-500 font-bold">Linked 4 hours ago</span>
+                                            <span className="text-[10px] text-zinc-500 font-bold">{twitchUser?.broadcaster_type || 'affiliate'}</span>
                                         </div>
                                     </div>
                                 </div>

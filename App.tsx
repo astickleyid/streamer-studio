@@ -10,6 +10,7 @@ import Messages from './components/Messages';
 import Analytics from './components/Analytics';
 import ViewerPage from './components/ViewerPage';
 import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConfig } from './types';
+import twitchAuthService from './services/twitchAuthService';
 
 enum ViewMode {
   PROFILE = 'PROFILE',
@@ -27,6 +28,31 @@ export default function App() {
   const [watchingChannel, setWatchingChannel] = useState<string>('');
   const [isWatchingTwitch, setIsWatchingTwitch] = useState(false);
   const [errorMsg, setErrorMsg] = useState<{ text: string, type: 'PERMISSION' | 'GENERIC' | 'COMPATIBILITY' } | null>(null);
+  const [twitchCallbackHandling, setTwitchCallbackHandling] = useState(false);
+
+  // Handle Twitch OAuth callback
+  useEffect(() => {
+    const handleTwitchCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      
+      if (code && window.location.pathname === '/auth/twitch/callback') {
+        setTwitchCallbackHandling(true);
+        const success = await twitchAuthService.handleCallback(code);
+        
+        if (success) {
+          // Clear URL and redirect to tools
+          window.history.replaceState({}, '', '/');
+          setCurrentView(ViewMode.TOOLS);
+        } else {
+          setErrorMsg({ text: "Failed to connect to Twitch", type: 'GENERIC' });
+        }
+        setTwitchCallbackHandling(false);
+      }
+    };
+
+    handleTwitchCallback();
+  }, []);
 
   // --- Global Stream Engine ---
   const [streamState, setStreamState] = useState<GlobalStreamState>({
@@ -172,6 +198,18 @@ export default function App() {
     setIsWatchingTwitch(isTwitch);
     setCurrentView(ViewMode.WATCHING);
   };
+
+  // Show loading screen during Twitch callback handling
+  if (twitchCallbackHandling) {
+    return (
+      <div className="h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Connecting to Twitch...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-black text-zinc-100 flex flex-col md:flex-row overflow-hidden font-sans">

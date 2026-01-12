@@ -11,7 +11,10 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'process.env.TWITCH_CLIENT_ID': JSON.stringify(env.TWITCH_CLIENT_ID),
+        'process.env.TWITCH_CLIENT_SECRET': JSON.stringify(env.TWITCH_CLIENT_SECRET),
+        'process.env.TWITCH_REDIRECT_URI': JSON.stringify(env.TWITCH_REDIRECT_URI)
       },
       resolve: {
         alias: {
