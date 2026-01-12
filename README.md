@@ -2,19 +2,62 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# nXcor Streamer Studio
 
-This contains everything you need to run your app locally.
+A professional streaming platform with AI-powered assistance, Twitch integration, and advanced broadcasting tools.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1LCwmrlhnWyeZk18msUuXpgR4p7gc3M64
+## Features
 
-## Run Locally
+- 🎥 Live streaming with camera and screen capture
+- 🤖 AI-powered streaming suggestions using Google Gemini
+- 💜 Twitch integration and bridge
+- 🎨 Multiple scene layouts (Camera, Screen, PIP, Gaming, BRB)
+- 🎭 Visual filters and effects
+- 📊 Real-time analytics and viewer stats
+- 💬 Chat integration
+- 🎵 Audio mixing controls
+- 🖼️ Customizable overlays and assets
 
-**Prerequisites:**  Node.js
+## Prerequisites
 
+- Node.js (v18 or higher)
+- A Google Gemini API key (get one at https://aistudio.google.com/apikey)
+
+## Setup
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Create a `.env` file with your Gemini API key:
+   ```bash
+   cp .env.example .env
+   ```
+   Then edit `.env` and add your API key:
+   ```
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open http://localhost:3000 in your browser
+
+## Building for Production
+
+```bash
+npm run build
+npm run preview
+```
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- Google Gemini AI
+- Lucide React Icons
