@@ -1,0 +1,9 @@
+{
+  "name": "nXcor Pro",
+  "description": "A high-performance Twitch competitor with integrated studio controls and multi-track persistence.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ]
+}
