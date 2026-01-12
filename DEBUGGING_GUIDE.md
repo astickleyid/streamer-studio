@@ -119,11 +119,14 @@ GEMINI_API_KEY=your_actual_api_key_here
 npm run dev
 ```
 
-5. **Test the API key**:
+5. **Test the API key** (optional):
 ```bash
-# Check if env variable is loaded
+# Check if env variable is loaded (requires dotenv package)
+# npm install dotenv --save-dev  # Install if needed
 node -e "require('dotenv').config(); console.log(process.env.GEMINI_API_KEY ? '✅ Key loaded' : '❌ Key missing')"
 ```
+
+Note: Vite loads .env automatically during dev, so this test is optional.
 
 **Rate Limits**:
 - Gemini Flash: 15 requests per minute (free tier)

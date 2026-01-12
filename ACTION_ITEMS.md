@@ -40,17 +40,28 @@ cp .env.example .env
 # Then edit .env and add your Gemini API key
 ```
 
-**Better Solution**: Add this check to package.json:
+**Better Solution**: Create a setup script for better readability:
+
+Create `scripts/ensure-env.js`:
+```javascript
+const fs = require('fs');
+if (!fs.existsSync('.env')) {
+  fs.copyFileSync('.env.example', '.env');
+  console.log('✅ Created .env from .env.example');
+}
+```
+
+Then update package.json:
 ```json
 {
   "scripts": {
-    "predev": "node -e \"require('fs').existsSync('.env')||require('fs').copyFileSync('.env.example','.env')\"",
+    "predev": "node scripts/ensure-env.js",
     "dev": "vite"
   }
 }
 ```
 
-This auto-creates .env from .env.example if it doesn't exist.
+This auto-creates .env from .env.example if it doesn't exist, with better error handling.
 
 ---
 

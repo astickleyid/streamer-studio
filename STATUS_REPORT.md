@@ -96,7 +96,7 @@ The **nXcor Streamer Studio** is a professional streaming platform with AI-power
 ### 3. **API Key Management** (LOW PRIORITY - ARCHITECTURAL)
 **Status**: 🟢 WORKING BUT COULD BE IMPROVED
 
-**Observation**: API keys are accessed via `process.env.API_KEY` which is mapped from `GEMINI_API_KEY` in vite.config.ts
+**Observation**: API keys are accessed via `process.env.API_KEY` which is mapped from `GEMINI_API_KEY` in vite.config.ts.
 
 **Current Implementation**:
 ```typescript
