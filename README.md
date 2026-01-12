@@ -61,3 +61,41 @@ npm run preview
 - Tailwind CSS
 - Google Gemini AI
 - Lucide React Icons
+
+## Documentation
+
+- **[📊 Status Report](STATUS_REPORT.md)** - Comprehensive project analysis and health check
+- **[🐛 Debugging Guide](DEBUGGING_GUIDE.md)** - Common issues and troubleshooting
+- **[🎯 Action Items](ACTION_ITEMS.md)** - Priority tasks and next steps
+- **[🔐 GitHub Secrets Setup](GITHUB_SECRETS_SETUP.md)** - CI/CD configuration guide
+
+## Project Health
+
+✅ **Build Status**: Passing  
+✅ **Tests**: 2/2 Passing  
+✅ **TypeScript**: No Errors  
+✅ **Security**: No Vulnerabilities  
+⚠️  **CI/CD**: Needs GitHub Secrets Configuration
+
+See [STATUS_REPORT.md](STATUS_REPORT.md) for detailed analysis.
+
+## Troubleshooting
+
+Having issues? Check the [Debugging Guide](DEBUGGING_GUIDE.md) for solutions to common problems:
+
+- Camera/microphone access denied
+- AI features not working
+- Build or test failures
+- Twitch embed issues
+- And more...
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`npm test`)
+5. Build the project (`npm run build`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
