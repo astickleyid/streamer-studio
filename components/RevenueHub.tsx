@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, Wallet, ArrowUpRight, ShieldCheck, Download, ExternalLink, History, PieChart } from 'lucide-react';
+import { DollarSign, Wallet, Download, ExternalLink, History, PieChart } from 'lucide-react';
 
 const RevenueHub: React.FC = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);

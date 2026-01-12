@@ -4,8 +4,8 @@ import {
   Camera, Mic, MicOff, Video, VideoOff, MessageSquare, Zap, Users, Activity, 
   LayoutTemplate, Star, RefreshCw, Volume2, MonitorUp, Clock, 
   Sparkles, Type, Bell, Shield, Sliders, X, RotateCcw, Monitor,
-  Trophy, Trash2, CheckCircle, Upload, Plus, Volume1, VolumeX, Music,
-  Layout, Wand2, Twitch, ChevronRight, Share2, Info, AlertCircle, Gamepad2, ScreenShare, Grid, Layers, Eye, EyeOff
+  Trophy, Trash2, CheckCircle, Plus, Volume1, Music,
+  Layout, Wand2, Twitch, ChevronRight, Gamepad2
 } from 'lucide-react';
 import { StreamStatus, OverlayConfig, StreamScene, StreamFilter, Poll, StreamOverlayAsset, GlobalStreamState } from '../types';
 import { generateStreamAssistance } from '../services/geminiService';

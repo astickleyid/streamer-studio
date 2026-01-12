@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-/* Added Settings to the lucide-react import list */
 import { Sliders, Music, Video, DollarSign, Megaphone, BarChart2, Globe, Layers, Wand2, Plus, Twitch, Key, ShieldCheck, RefreshCw, ExternalLink, Activity, Users, Star, Gift, Settings } from 'lucide-react';
 import AudioLab from './AudioLab';
 import RevenueHub from './RevenueHub';

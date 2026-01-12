@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Youtube, Facebook, Tv, Radio, Plus, Settings2, ShieldCheck, RefreshCw, X } from 'lucide-react';
+import { Globe, Youtube, Facebook, Tv, ShieldCheck, RefreshCw } from 'lucide-react';
 
 const UplinkPro: React.FC = () => {
   const [destinations, setDestinations] = useState([
