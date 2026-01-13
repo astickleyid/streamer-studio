@@ -9,7 +9,7 @@ nXcor Streamer Studio is a professional streaming platform with AI-powered assis
 - **Frontend Framework**: React 19 with React Router DOM
 - **Language**: TypeScript (strict mode)
 - **Build Tool**: Vite 6
-- **Styling**: Tailwind CSS (utility-first approach)
+- **Styling**: Tailwind CSS via CDN (utility-first approach)
 - **Testing**: Vitest with React Testing Library
 - **AI Integration**: Google Gemini AI (`@google/genai`)
 - **Icons**: Lucide React
@@ -87,12 +87,12 @@ nXcor Streamer Studio is a professional streaming platform with AI-powered assis
 ### Environment Variables
 
 - Store sensitive data in `.env` file (never commit)
-- Access via `process.env.VARIABLE_NAME` (defined in `vite.config.ts`)
-- Required env vars:
-  - `GEMINI_API_KEY`: Google Gemini AI API key
-  - `TWITCH_CLIENT_ID`: Twitch application client ID
-  - `TWITCH_CLIENT_SECRET`: Twitch application client secret
-  - `TWITCH_REDIRECT_URI`: OAuth redirect URI for Twitch
+- Environment variables are mapped in `vite.config.ts` and accessed via `process.env.VARIABLE_NAME`
+- Required env vars (as defined in `.env` file):
+  - `GEMINI_API_KEY`: Google Gemini AI API key (accessed in code as `process.env.API_KEY`)
+  - `TWITCH_CLIENT_ID`: Twitch application client ID (accessed in code as `process.env.TWITCH_CLIENT_ID`)
+  - `TWITCH_CLIENT_SECRET`: Twitch application client secret (accessed in code as `process.env.TWITCH_CLIENT_SECRET`)
+  - `TWITCH_REDIRECT_URI`: OAuth redirect URI for Twitch (accessed in code as `process.env.TWITCH_REDIRECT_URI`)
 
 ## Testing
 
