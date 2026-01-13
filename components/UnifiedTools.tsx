@@ -179,7 +179,6 @@ const UnifiedTools: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                            </div>
                         </div>
 
                         <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 shadow-3xl space-y-8 flex flex-col justify-between">
