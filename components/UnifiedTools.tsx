@@ -14,12 +14,16 @@ const UnifiedTools: React.FC = () => {
   const [isTwitchConnecting, setIsTwitchConnecting] = useState(false);
   const [isTwitchLinked, setIsTwitchLinked] = useState(false);
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
+  const [isTwitchConfigured, setIsTwitchConfigured] = useState(false);
   
   useEffect(() => {
     checkTwitchAuth();
   }, []);
 
   const checkTwitchAuth = async () => {
+    const isConfigured = twitchAuthService.isConfigured();
+    setIsTwitchConfigured(isConfigured);
+
     const isAuth = twitchAuthService.isAuthenticated();
     setIsTwitchLinked(isAuth);
     
@@ -39,8 +43,13 @@ const UnifiedTools: React.FC = () => {
   ];
 
   const handleTwitchLink = () => {
+    if (!isTwitchConfigured) {
+      return; // Don't attempt to link if not configured
+    }
     const authUrl = twitchAuthService.getAuthUrl();
-    window.location.href = authUrl;
+    if (authUrl) {
+      window.location.href = authUrl;
+    }
   };
 
   const handleTwitchDisconnect = () => {
@@ -73,7 +82,24 @@ const UnifiedTools: React.FC = () => {
                     )}
                 </header>
 
-                {!isTwitchLinked ? (
+                {!isTwitchConfigured ? (
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-[3rem] p-16 text-center shadow-3xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-yellow-500 to-orange-600"></div>
+                        <div className="w-20 h-20 mx-auto mb-6 bg-yellow-500/10 rounded-full flex items-center justify-center">
+                            <Key className="text-yellow-500" size={40} />
+                        </div>
+                        <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter italic">Configuration Required</h3>
+                        <p className="text-zinc-400 max-w-2xl mx-auto mb-6 font-bold leading-relaxed text-sm">Twitch integration requires configuration. Please set the following environment variables:</p>
+                        <div className="bg-black/40 border border-zinc-800 rounded-2xl p-6 max-w-xl mx-auto text-left mb-8">
+                            <code className="text-xs text-zinc-300 font-mono block mb-2">TWITCH_CLIENT_ID=your_client_id_here</code>
+                            <code className="text-xs text-zinc-300 font-mono block mb-2">TWITCH_CLIENT_SECRET=your_client_secret_here</code>
+                            <code className="text-xs text-zinc-300 font-mono block">TWITCH_REDIRECT_URI=http://localhost:3000/auth/twitch/callback</code>
+                        </div>
+                        <p className="text-zinc-500 text-xs max-w-xl mx-auto">
+                            See <a href="https://github.com/astickleyid/streamer-studio/blob/main/TWITCH_SETUP.md" target="_blank" rel="noopener noreferrer" className="text-[#9146FF] hover:underline">TWITCH_SETUP.md</a> for detailed setup instructions.
+                        </p>
+                    </div>
+                ) : !isTwitchLinked ? (
                     <div className="bg-zinc-900 border border-zinc-800 rounded-[3rem] p-16 text-center shadow-3xl relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#9146FF] to-indigo-600"></div>
                         <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter italic">Connect Identity</h3>
