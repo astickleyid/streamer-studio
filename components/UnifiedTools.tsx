@@ -7,13 +7,16 @@ import UplinkPro from './UplinkPro';
 import GlobalSync from './GlobalSync';
 import Analytics from './Analytics';
 import twitchAuthService from '../services/twitchAuthService';
-import { TwitchUser } from '../types/twitch';
+import { TwitchUser, TwitchChannel, TwitchStreamInfo } from '../types/twitch';
 
 const UnifiedTools: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isTwitchConnecting, setIsTwitchConnecting] = useState(false);
   const [isTwitchLinked, setIsTwitchLinked] = useState(false);
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
+  const [twitchChannel, setTwitchChannel] = useState<TwitchChannel | null>(null);
+  const [twitchStream, setTwitchStream] = useState<TwitchStreamInfo | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   
   useEffect(() => {
     checkTwitchAuth();
@@ -24,8 +27,26 @@ const UnifiedTools: React.FC = () => {
     setIsTwitchLinked(isAuth);
     
     if (isAuth) {
-      const user = await twitchAuthService.getCurrentUser();
+      await loadTwitchData();
+    }
+  };
+
+  const loadTwitchData = async () => {
+    setIsLoadingData(true);
+    try {
+      const [user, channel, stream] = await Promise.all([
+        twitchAuthService.getCurrentUser(),
+        twitchAuthService.getChannelInfo(),
+        twitchAuthService.getCurrentStream()
+      ]);
+      
       setTwitchUser(user);
+      setTwitchChannel(channel);
+      setTwitchStream(stream);
+    } catch (error) {
+      console.error('Failed to load Twitch data:', error);
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
@@ -47,6 +68,12 @@ const UnifiedTools: React.FC = () => {
     twitchAuthService.clearTokens();
     setIsTwitchLinked(false);
     setTwitchUser(null);
+    setTwitchChannel(null);
+    setTwitchStream(null);
+  };
+
+  const handleRefreshData = async () => {
+    await loadTwitchData();
   };
 
   const renderToolDetail = () => {
@@ -95,51 +122,95 @@ const UnifiedTools: React.FC = () => {
                                         <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">@{twitchUser?.display_name || twitchUser?.login || 'Loading...'}</h3>
                                         <div className="flex items-center gap-3">
                                             <div className="px-3 py-1 bg-green-500/10 text-green-500 text-[9px] font-black rounded-lg border border-green-500/20 uppercase tracking-widest">Bridged Active</div>
-                                            <span className="text-[10px] text-zinc-500 font-bold">{twitchUser?.broadcaster_type || 'affiliate'}</span>
+                                            <span className="text-[10px] text-zinc-500 font-bold uppercase">{twitchUser?.broadcaster_type || 'user'}</span>
+                                            {twitchStream && (
+                                                <div className="px-3 py-1 bg-red-500/10 text-red-500 text-[9px] font-black rounded-lg border border-red-500/20 uppercase tracking-widest flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                                                    LIVE
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="hidden md:flex gap-3">
-                                    <button className="p-4 bg-black/40 rounded-2xl text-zinc-500 hover:text-white border border-zinc-800 transition-all"><Settings size={20}/></button>
+                                    <button onClick={handleRefreshData} disabled={isLoadingData} className="p-4 bg-black/40 rounded-2xl text-zinc-500 hover:text-white border border-zinc-800 transition-all disabled:opacity-50">
+                                        <RefreshCw size={20} className={isLoadingData ? 'animate-spin' : ''} />
+                                    </button>
                                     <button className="p-4 bg-black/40 rounded-2xl text-zinc-500 hover:text-white border border-zinc-800 transition-all"><ExternalLink size={20}/></button>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
-                                {[
-                                    { label: 'Sub Count', value: '1,242', icon: Users, color: 'text-purple-400' },
-                                    { label: 'Bits Peak', value: '45.2k', icon: Gift, color: 'text-yellow-400' },
-                                    { label: 'Stream Goal', value: '92%', icon: Star, color: 'text-indigo-400' },
-                                    { label: 'Total Clips', value: '215', icon: Activity, color: 'text-green-400' },
-                                ].map((stat, i) => (
-                                    <div key={i} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] space-y-4 shadow-xl hover:-translate-y-1 transition-all">
-                                        <div className="flex items-center justify-between">
-                                            <stat.icon className={stat.color} size={18} />
-                                            <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{stat.label}</span>
-                                        </div>
-                                        <p className="text-3xl font-black italic tracking-tighter text-white">{stat.value}</p>
+                                <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] space-y-4 shadow-xl hover:-translate-y-1 transition-all">
+                                    <div className="flex items-center justify-between">
+                                        <Users className="text-purple-400" size={18} />
+                                        <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">View Count</span>
                                     </div>
-                                ))}
+                                    <p className="text-3xl font-black italic tracking-tighter text-white">{twitchUser?.view_count?.toLocaleString() || '0'}</p>
+                                </div>
+                                
+                                <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] space-y-4 shadow-xl hover:-translate-y-1 transition-all">
+                                    <div className="flex items-center justify-between">
+                                        <Activity className="text-green-400" size={18} />
+                                        <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{twitchStream ? 'Live Viewers' : 'Status'}</span>
+                                    </div>
+                                    <p className="text-3xl font-black italic tracking-tighter text-white">
+                                        {twitchStream ? twitchStream.viewer_count.toLocaleString() : 'Offline'}
+                                    </p>
+                                </div>
+                                
+                                <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] space-y-4 shadow-xl hover:-translate-y-1 transition-all">
+                                    <div className="flex items-center justify-between">
+                                        <Star className="text-indigo-400" size={18} />
+                                        <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Category</span>
+                                    </div>
+                                    <p className="text-xl font-black italic tracking-tighter text-white truncate">
+                                        {twitchStream?.game_name || twitchChannel?.game_name || 'Not Set'}
+                                    </p>
+                                </div>
+                                
+                                <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] space-y-4 shadow-xl hover:-translate-y-1 transition-all">
+                                    <div className="flex items-center justify-between">
+                                        <Gift className="text-yellow-400" size={18} />
+                                        <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Stream Title</span>
+                                    </div>
+                                    <p className="text-sm font-black tracking-tight text-white line-clamp-2">
+                                        {twitchStream?.title || twitchChannel?.title || 'No title set'}
+                                    </p>
+                                </div>
+                            </div>
                             </div>
                         </div>
 
                         <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 shadow-3xl space-y-8 flex flex-col justify-between">
                             <div className="space-y-6">
-                                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Active Bridge Services</h4>
+                                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Channel Information</h4>
                                 <div className="space-y-4">
-                                    {['Chat Overlay', 'Donation Alerts', 'Twitch Emotes', 'Multi-VOD Record'].map((svc, i) => (
-                                        <div key={i} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-zinc-800">
-                                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{svc}</span>
-                                            <div className="w-10 h-5 bg-[#9146FF] rounded-full flex items-center px-1">
-                                                <div className="w-3.5 h-3.5 bg-white rounded-full ml-auto shadow-md"></div>
-                                            </div>
+                                    <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-zinc-800">
+                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Account Created</span>
+                                        <span className="text-[10px] font-black text-white">{twitchUser?.created_at ? new Date(twitchUser.created_at).toLocaleDateString() : 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-zinc-800">
+                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Channel Language</span>
+                                        <span className="text-[10px] font-black text-white uppercase">{twitchChannel?.broadcaster_language || 'en'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-zinc-800">
+                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Stream Delay</span>
+                                        <span className="text-[10px] font-black text-white">{twitchChannel?.delay || 0}s</span>
+                                    </div>
+                                    {twitchStream && (
+                                        <div className="flex items-center justify-between p-4 bg-red-500/10 rounded-2xl border border-red-500/20">
+                                            <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Started</span>
+                                            <span className="text-[10px] font-black text-white">{new Date(twitchStream.started_at).toLocaleTimeString()}</span>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
                             <div className="p-6 bg-[#9146FF]/5 rounded-2xl border border-[#9146FF]/20 flex flex-col gap-4">
-                                <p className="text-[9px] text-zinc-400 font-bold uppercase leading-relaxed">External Twitch data is synced via nXcor Edge Nodes for zero-latency studio rendering.</p>
-                                <button className="text-[10px] font-black text-[#9146FF] uppercase tracking-widest flex items-center gap-2">Force Re-Sync <RefreshCw size={12}/></button>
+                                <p className="text-[9px] text-zinc-400 font-bold uppercase leading-relaxed">Real-time Twitch data via OAuth API. Click refresh to update stats.</p>
+                                <button onClick={handleRefreshData} disabled={isLoadingData} className="text-[10px] font-black text-[#9146FF] uppercase tracking-widest flex items-center gap-2 disabled:opacity-50">
+                                    {isLoadingData ? 'Syncing...' : 'Force Re-Sync'} <RefreshCw size={12} className={isLoadingData ? 'animate-spin' : ''} />
+                                </button>
                             </div>
                         </div>
                     </div>
