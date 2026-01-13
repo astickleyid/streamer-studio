@@ -2,7 +2,18 @@ import axios from 'axios';
 import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
-const TWITCH_REDIRECT_URI = process.env.TWITCH_REDIRECT_URI || 'http://localhost:3000/auth/twitch/callback';
+// Auto-detect redirect URI based on environment
+const getRedirectUri = () => {
+  if (process.env.TWITCH_REDIRECT_URI) {
+    return process.env.TWITCH_REDIRECT_URI;
+  }
+  // Auto-detect: use current origin + callback path
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/auth/twitch/callback`;
+  }
+  return 'http://localhost:3000/auth/twitch/callback';
+};
+const TWITCH_REDIRECT_URI = getRedirectUri();
 
 // Twitch OAuth scopes needed for streaming
 const SCOPES = [
