@@ -2,6 +2,7 @@ import axios from 'axios';
 import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
+const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || '';
 const TWITCH_REDIRECT_URI = process.env.TWITCH_REDIRECT_URI || 'http://localhost:3000/auth/twitch/callback';
 
 // Twitch OAuth scopes needed for streaming
@@ -15,6 +16,11 @@ const SCOPES = [
   'chat:read',
   'chat:edit'
 ];
+
+// Helper to check if Twitch is properly configured
+const isTwitchConfigured = (): boolean => {
+  return TWITCH_CLIENT_ID.length > 0 && TWITCH_CLIENT_SECRET.length > 0;
+};
 
 export class TwitchAuthService {
   private static instance: TwitchAuthService;
@@ -73,7 +79,15 @@ export class TwitchAuthService {
     return Date.now() < this.tokenExpiry;
   }
 
+  isConfigured(): boolean {
+    return isTwitchConfigured();
+  }
+
   getAuthUrl(): string {
+    if (!isTwitchConfigured()) {
+      console.warn('Twitch is not configured. Please set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET.');
+      return '';
+    }
     const params = new URLSearchParams({
       client_id: TWITCH_CLIENT_ID,
       redirect_uri: TWITCH_REDIRECT_URI,
@@ -84,13 +98,18 @@ export class TwitchAuthService {
   }
 
   async handleCallback(code: string): Promise<boolean> {
+    if (!isTwitchConfigured()) {
+      console.error('Twitch is not configured');
+      return false;
+    }
+
     try {
       // In production, this should go through your backend to keep client_secret secure
       const response = await axios.post<TwitchTokenResponse>(
         'https://id.twitch.tv/oauth2/token',
         new URLSearchParams({
           client_id: TWITCH_CLIENT_ID,
-          client_secret: process.env.TWITCH_CLIENT_SECRET || '',
+          client_secret: TWITCH_CLIENT_SECRET,
           code,
           grant_type: 'authorization_code',
           redirect_uri: TWITCH_REDIRECT_URI
@@ -107,13 +126,17 @@ export class TwitchAuthService {
 
   private async refreshAccessToken(): Promise<boolean> {
     if (!this.refreshToken) return false;
+    if (!isTwitchConfigured()) {
+      console.error('Twitch is not configured');
+      return false;
+    }
 
     try {
       const response = await axios.post<TwitchTokenResponse>(
         'https://id.twitch.tv/oauth2/token',
         new URLSearchParams({
           client_id: TWITCH_CLIENT_ID,
-          client_secret: process.env.TWITCH_CLIENT_SECRET || '',
+          client_secret: TWITCH_CLIENT_SECRET,
           grant_type: 'refresh_token',
           refresh_token: this.refreshToken
         })
@@ -140,6 +163,10 @@ export class TwitchAuthService {
   }
 
   async getCurrentUser(): Promise<TwitchUser | null> {
+    if (!isTwitchConfigured()) {
+      return null;
+    }
+
     const token = await this.getValidToken();
     if (!token) return null;
 
@@ -162,6 +189,10 @@ export class TwitchAuthService {
   }
 
   async getStreamKey(): Promise<string | null> {
+    if (!isTwitchConfigured()) {
+      return null;
+    }
+
     const token = await this.getValidToken();
     if (!token) return null;
 
@@ -187,6 +218,10 @@ export class TwitchAuthService {
   }
 
   async getChannelInfo(): Promise<TwitchChannel | null> {
+    if (!isTwitchConfigured()) {
+      return null;
+    }
+
     const token = await this.getValidToken();
     if (!token) return null;
 
@@ -212,6 +247,10 @@ export class TwitchAuthService {
   }
 
   async updateChannelInfo(title: string, gameId?: string): Promise<boolean> {
+    if (!isTwitchConfigured()) {
+      return false;
+    }
+
     const token = await this.getValidToken();
     if (!token) return false;
 
@@ -242,6 +281,10 @@ export class TwitchAuthService {
   }
 
   async getCurrentStream(): Promise<TwitchStreamInfo | null> {
+    if (!isTwitchConfigured()) {
+      return null;
+    }
+
     const token = await this.getValidToken();
     if (!token) return null;
 
