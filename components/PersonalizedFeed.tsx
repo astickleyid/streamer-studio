@@ -18,6 +18,7 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<TwitchUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [sortBy, setSortBy] = useState<'viewers' | 'recent'>('viewers');
   
   const categories = ["Following", "Live Now", "All Channels", "Discover"];
 
@@ -84,6 +85,16 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const offlineFollowedChannels = followedChannels.filter(
     channel => !liveFollowedStreams.some(stream => stream.user_id === channel.id)
   );
+
+  // Sort live streams based on selected sort option
+  const sortedLiveStreams = [...liveFollowedStreams].sort((a, b) => {
+    if (sortBy === 'viewers') {
+      return b.viewer_count - a.viewer_count;
+    } else {
+      // Sort by started_at (most recent first)
+      return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
+    }
+  });
 
   // If not authenticated, show login prompt
   if (!isAuthenticated) {
@@ -215,30 +226,59 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
       </div>
 
       {/* Category Tabs */}
-      <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-        {categories.map((cat) => (
-          <button 
-            key={cat} 
-            onClick={() => setActiveCategory(cat)}
-            className={`px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border whitespace-nowrap ${
-              activeCategory === cat 
-                ? 'bg-purple-600 border-purple-500 text-white' 
-                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-white'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
+          {categories.map((cat) => (
+            <button 
+              key={cat} 
+              onClick={() => setActiveCategory(cat)}
+              className={`px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border whitespace-nowrap ${
+                activeCategory === cat 
+                  ? 'bg-purple-600 border-purple-500 text-white' 
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-white'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        
+        {/* Sort Options */}
+        {(activeCategory === "Following" || activeCategory === "Live Now") && liveFollowedStreams.length > 0 && (
+          <div className="flex gap-2 items-center">
+            <Filter size={14} className="text-zinc-600" />
+            <button
+              onClick={() => setSortBy('viewers')}
+              className={`px-4 py-2 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all ${
+                sortBy === 'viewers'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-zinc-900 text-zinc-500 hover:text-white'
+              }`}
+            >
+              Most Viewers
+            </button>
+            <button
+              onClick={() => setSortBy('recent')}
+              className={`px-4 py-2 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all ${
+                sortBy === 'recent'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-zinc-900 text-zinc-500 hover:text-white'
+              }`}
+            >
+              Recently Started
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Live Followed Streams */}
       {(activeCategory === "Following" || activeCategory === "Live Now") && liveFollowedStreams.length > 0 && (
         <section className="mb-10">
           <h2 className="text-[9px] font-black mb-6 flex items-center gap-2 uppercase tracking-[0.3em] text-zinc-600">
-            <TrendingUp size={14} className="text-red-500" /> Live Now
+            <TrendingUp size={14} className="text-red-500" /> Live Now ({liveFollowedStreams.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {liveFollowedStreams.map((stream) => (
+            {sortedLiveStreams.map((stream) => (
               <div key={stream.id} className="group cursor-pointer" onClick={() => onWatch(stream.user_login, true)}>
                 <div className="relative aspect-video bg-zinc-900 rounded-2xl overflow-hidden mb-3 border border-zinc-800 transition-all group-hover:border-red-500">
                   <img 
@@ -279,7 +319,7 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
       {(activeCategory === "Following" || activeCategory === "All Channels") && offlineFollowedChannels.length > 0 && (
         <section className="mb-10">
           <h2 className="text-[9px] font-black mb-6 flex items-center gap-2 uppercase tracking-[0.3em] text-zinc-600">
-            <UserCheck size={14} /> Followed Channels
+            <UserCheck size={14} /> Followed Channels ({offlineFollowedChannels.length} Offline)
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {offlineFollowedChannels.map((channel) => (
