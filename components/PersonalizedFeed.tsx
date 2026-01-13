@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter } from 'lucide-react';
 import twitchAuthService from '../services/twitchAuthService';
 import { TwitchUser, TwitchStreamInfo } from '../types/twitch';
+import { LocalLiveState } from '../types';
+
+// Constants for external URLs
+const TWITCH_CDN_PROFILE_IMAGE_URL = 'https://static-cdn.jtvnw.net/jtv_user_pictures';
+const PLACEHOLDER_IMAGE_URL = 'https://via.placeholder.com/440x248/18181b/71717a?text=Live';
+const UI_AVATARS_API_URL = 'https://ui-avatars.com/api';
 
 interface PersonalizedFeedProps {
   onWatch: (channelName: string, isTwitch?: boolean) => void;
@@ -9,7 +15,7 @@ interface PersonalizedFeedProps {
 
 const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [activeCategory, setActiveCategory] = useState("Following");
-  const [myLiveState, setMyLiveState] = useState<any>(null);
+  const [myLiveState, setMyLiveState] = useState<LocalLiveState | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<TwitchUser | null>(null);
   const [followedChannels, setFollowedChannels] = useState<TwitchUser[]>([]);
@@ -286,7 +292,7 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
                     className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
                     alt={stream.user_name}
                     onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/440x248/18181b/71717a?text=Live';
+                      e.currentTarget.src = PLACEHOLDER_IMAGE_URL;
                     }}
                   />
                   <div className="absolute top-3 left-3 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-xl animate-pulse">LIVE</div>
@@ -297,8 +303,8 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
                 <div className="flex gap-3 px-1">
                   <div className="w-10 h-10 rounded-lg bg-zinc-900 overflow-hidden ring-1 ring-zinc-800 flex-shrink-0">
                     <img 
-                      src={`https://static-cdn.jtvnw.net/jtv_user_pictures/${stream.user_login}-profile_image-70x70.png`} 
-                      onError={(e) => (e.currentTarget.src = `https://ui-avatars.com/api/?name=${stream.user_name}&background=9146FF&color=fff&size=70`)}
+                      src={`${TWITCH_CDN_PROFILE_IMAGE_URL}/${stream.user_login}-profile_image-70x70.png`} 
+                      onError={(e) => (e.currentTarget.src = `${UI_AVATARS_API_URL}/?name=${stream.user_name}&background=9146FF&color=fff&size=70`)}
                       className="w-full h-full object-cover" 
                       alt="avatar" 
                     />

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel } from '../types/twitch';
+import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchFollowsResponse } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
 // Auto-detect redirect URI based on environment
@@ -286,7 +286,7 @@ export class TwitchAuthService {
     if (!user) return [];
 
     try {
-      const response = await axios.get<{ data: Array<{ broadcaster_id: string; broadcaster_login: string; broadcaster_name: string; followed_at: string }> }>(
+      const response = await axios.get<TwitchFollowsResponse>(
         `https://api.twitch.tv/helix/channels/followed?user_id=${user.id}&first=${limit}`,
         {
           headers: {
