@@ -53,8 +53,8 @@ nXcor Streamer Studio is a professional streaming platform with AI-powered assis
 - Use functional components with TypeScript
 - Define prop interfaces inline or at the top of the file
 - Use React hooks (`useState`, `useEffect`, `useRef`, `useContext`)
-- Import React explicitly: `import React from 'react'`
-- Use the `React.FC<PropsType>` pattern for component typing
+- Import React explicitly: `import React from 'react'` (this codebase uses explicit imports)
+- Use the `React.FC<PropsType>` pattern for component typing (this is the pattern used in this codebase)
 
 ### Imports
 
@@ -80,7 +80,8 @@ nXcor Streamer Studio is a professional streaming platform with AI-powered assis
 - Services: camelCase with "Service" suffix (e.g., `geminiService.ts`, `twitchService.ts`)
 - Types/Interfaces: PascalCase (e.g., `StreamStatus`, `ChatMessage`)
 - Variables/functions: camelCase
-- Constants: camelCase (not UPPER_CASE)
+- Module-level constants: UPPER_CASE (e.g., `TWITCH_CLIENT_ID`, `SCOPES`)
+- Exported functions: camelCase (e.g., `generateStreamAssistance`, `getTwitchEmbedUrl`)
 - Enum values: UPPER_CASE (e.g., `StreamStatus.OFFLINE`)
 
 ### Environment Variables
