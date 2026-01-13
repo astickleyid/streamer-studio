@@ -5,10 +5,13 @@ import {
   LayoutTemplate, Star, RefreshCw, Volume2, MonitorUp, Clock, 
   Sparkles, Type, Bell, Shield, Sliders, X, RotateCcw, Monitor,
   Trophy, Trash2, CheckCircle, Plus, Volume1, Music,
-  Layout, Wand2, Twitch, ChevronRight, Gamepad2
+  Layout, Wand2, Twitch, ChevronRight, Gamepad2, Edit3
 } from 'lucide-react';
 import { StreamStatus, OverlayConfig, StreamScene, StreamFilter, Poll, StreamOverlayAsset, GlobalStreamState } from '../types';
 import { generateStreamAssistance } from '../services/geminiService';
+import { useStreamManager } from '../contexts/StreamManagerContext';
+import StreamInfoEditor from './StreamInfoEditor';
+import StreamKeyManager from './StreamKeyManager';
 
 interface StreamerStudioProps {
   onEndStream: () => void;
@@ -35,6 +38,9 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
   const [showConfig, setShowConfig] = useState(false);
   const [isTwitchSyncing, setIsTwitchSyncing] = useState(false);
   const [isHandshaking, setIsHandshaking] = useState(false);
+  const [showStreamInfoEditor, setShowStreamInfoEditor] = useState(false);
+  
+  const { twitchUser, twitchStream, isAuthenticated, localStreamTitle, setLocalStreamTitle } = useStreamManager();
   
   // Detect if screen sharing is even possible in this environment
   const isScreenShareSupported = typeof navigator.mediaDevices?.getDisplayMedia === 'function';
@@ -164,6 +170,24 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+             {isAuthenticated && twitchStream && (
+               <div className="flex items-center gap-2 bg-purple-500/10 px-3 py-1 rounded-md border border-purple-500/20 text-[9px] font-black text-purple-400 uppercase tracking-widest">
+                 <Twitch size={12} />
+                 <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+                 LIVE ON TWITCH
+                 <div className="w-px h-2 bg-purple-500/20 ml-1" />
+                 {twitchStream.viewer_count} viewers
+               </div>
+             )}
+             {isAuthenticated && (
+               <button 
+                 onClick={() => setShowStreamInfoEditor(true)}
+                 className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-purple-500/40 rounded-md font-black text-[9px] uppercase tracking-widest transition-all text-zinc-400 hover:text-purple-400 flex items-center gap-1"
+               >
+                 <Edit3 size={12} />
+                 Stream Info
+               </button>
+             )}
              <button onClick={onToggleStatus} className={`px-4 py-1.5 rounded-md font-black text-[9px] uppercase tracking-widest transition-all ${globalState.status === StreamStatus.LIVE ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-indigo-600 text-white shadow-lg hover:bg-indigo-500'}`}>
               {globalState.status === StreamStatus.LIVE ? 'End Broadcast' : 'Start Transmission'}
             </button>
@@ -503,6 +527,127 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
                </div>
             </div>
           )}
+
+          {activeTab === 'TWITCH' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              {!isAuthenticated ? (
+                <div className="p-6 bg-purple-600/5 border border-purple-500/20 rounded-2xl text-center space-y-4">
+                  <Twitch size={48} className="text-purple-400 mx-auto" />
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-purple-300 mb-2">Connect to Twitch</h3>
+                    <p className="text-[10px] text-zinc-400 leading-relaxed">Authenticate with your Twitch account to enable live streaming, stream management, and real-time analytics.</p>
+                  </div>
+                  <button 
+                    onClick={() => window.location.href = '/unified-tools'}
+                    className="w-full py-3 bg-purple-600 border border-purple-400 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-purple-500 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Twitch size={14} />
+                    Connect Twitch Account
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Twitch Account Info */}
+                  <div className="p-4 bg-purple-600/5 border border-purple-500/20 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Twitch size={14} className="text-purple-400" />
+                      <span className="text-[8px] font-black uppercase tracking-widest text-purple-300">Connected Account</span>
+                    </div>
+                    {twitchUser && (
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={twitchUser.profile_image_url} 
+                          alt={twitchUser.display_name}
+                          className="w-10 h-10 rounded-full border-2 border-purple-500/30"
+                        />
+                        <div>
+                          <p className="text-[11px] font-black text-white">{twitchUser.display_name}</p>
+                          <p className="text-[9px] text-zinc-500 font-mono">@{twitchUser.login}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stream Status */}
+                  {twitchStream ? (
+                    <div className="p-4 bg-green-600/5 border border-green-500/20 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                          <span className="text-[8px] font-black uppercase tracking-widest text-green-400">Live on Twitch</span>
+                        </div>
+                        <span className="text-[10px] font-black text-white">{twitchStream.viewer_count} viewers</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-white truncate">{twitchStream.title}</p>
+                        <p className="text-[9px] text-zinc-500">{twitchStream.game_name || 'No category'}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-center">
+                      <p className="text-[9px] font-black uppercase text-zinc-500">Stream Offline</p>
+                    </div>
+                  )}
+
+                  {/* Stream Controls */}
+                  <div className="space-y-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Stream Management</p>
+                    
+                    <button 
+                      onClick={() => setShowStreamInfoEditor(true)}
+                      className="w-full p-4 rounded-xl border bg-zinc-900 border-zinc-800 hover:border-purple-500/40 transition-all text-left flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Edit3 size={16} className="text-zinc-500 group-hover:text-purple-400 transition-colors" />
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-white">Edit Stream Info</p>
+                          <p className="text-[8px] text-zinc-500">Update title and category</p>
+                        </div>
+                      </div>
+                      <ChevronRight size={14} className="text-zinc-600 group-hover:text-purple-400 transition-colors" />
+                    </button>
+
+                    <StreamKeyManager />
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="space-y-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Quick Actions</p>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <button className="p-3 rounded-xl border bg-zinc-900 border-zinc-800 hover:border-purple-500/40 transition-all flex flex-col items-center gap-2 text-center">
+                        <Users size={16} className="text-purple-400" />
+                        <span className="text-[9px] font-black uppercase text-zinc-400">Followers</span>
+                      </button>
+                      
+                      <button className="p-3 rounded-xl border bg-zinc-900 border-zinc-800 hover:border-purple-500/40 transition-all flex flex-col items-center gap-2 text-center">
+                        <Activity size={16} className="text-purple-400" />
+                        <span className="text-[9px] font-black uppercase text-zinc-400">Analytics</span>
+                      </button>
+                      
+                      <button className="p-3 rounded-xl border bg-zinc-900 border-zinc-800 hover:border-purple-500/40 transition-all flex flex-col items-center gap-2 text-center">
+                        <MessageSquare size={16} className="text-purple-400" />
+                        <span className="text-[9px] font-black uppercase text-zinc-400">Chat</span>
+                      </button>
+                      
+                      <button className="p-3 rounded-xl border bg-zinc-900 border-zinc-800 hover:border-purple-500/40 transition-all flex flex-col items-center gap-2 text-center">
+                        <Bell size={16} className="text-purple-400" />
+                        <span className="text-[9px] font-black uppercase text-zinc-400">Alerts</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stream Info Display */}
+                  {localStreamTitle && (
+                    <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl space-y-2">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Current Stream Title</p>
+                      <p className="text-[10px] font-bold text-white leading-relaxed">{localStreamTitle}</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -523,6 +668,11 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
         .animate-ticker { animation: ticker 25s linear infinite; }
         .animate-spin-slow { animation: spin 8s linear infinite; }
       `}</style>
+
+      {/* Stream Info Editor Modal */}
+      {showStreamInfoEditor && (
+        <StreamInfoEditor onClose={() => setShowStreamInfoEditor(false)} />
+      )}
     </div>
   );
 };
