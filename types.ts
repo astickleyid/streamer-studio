@@ -62,3 +62,9 @@ export interface AIToolResponse {
   pollQuestion?: string;
   pollOptions?: string[];
 }
+
+export interface RTMPConfig {
+  serverUrl: string;
+  streamKey: string;
+  enabled: boolean;
+}
