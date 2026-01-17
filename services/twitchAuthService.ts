@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel } from '../types/twitch';
+import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchFollowsResponse } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
 // Auto-detect redirect URI based on environment
@@ -18,6 +18,7 @@ const TWITCH_REDIRECT_URI = getRedirectUri();
 // Twitch OAuth scopes needed for streaming
 const SCOPES = [
   'user:read:email',
+  'user:read:follows',
   'channel:manage:broadcast',
   'channel:read:stream_key',
   'channel:manage:redemptions',
@@ -274,6 +275,98 @@ export class TwitchAuthService {
     } catch (error) {
       console.error('Failed to fetch stream info:', error);
       return null;
+    }
+  }
+
+  async getFollowedChannels(limit: number = 20): Promise<TwitchUser[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    const user = await this.getCurrentUser();
+    if (!user) return [];
+
+    try {
+      const response = await axios.get<TwitchFollowsResponse>(
+        `https://api.twitch.tv/helix/channels/followed?user_id=${user.id}&first=${limit}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      // Get full user details for followed channels
+      const broadcasterIds = response.data.data.map(f => f.broadcaster_id);
+      if (broadcasterIds.length === 0) return [];
+
+      const usersResponse = await axios.get<{ data: TwitchUser[] }>(
+        `https://api.twitch.tv/helix/users?${broadcasterIds.map(id => `id=${id}`).join('&')}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return usersResponse.data.data;
+    } catch (error) {
+      console.error('Failed to fetch followed channels:', error);
+      return [];
+    }
+  }
+
+  async getLiveFollowedStreams(): Promise<TwitchStreamInfo[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    const user = await this.getCurrentUser();
+    if (!user) return [];
+
+    try {
+      const followedChannels = await this.getFollowedChannels(100);
+      if (followedChannels.length === 0) return [];
+
+      const userIds = followedChannels.map(c => c.id);
+      
+      // Twitch API allows up to 100 user_id parameters
+      const response = await axios.get<{ data: TwitchStreamInfo[] }>(
+        `https://api.twitch.tv/helix/streams?${userIds.map(id => `user_id=${id}`).join('&')}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch live followed streams:', error);
+      return [];
+    }
+  }
+
+  async searchChannels(query: string, limit: number = 20): Promise<TwitchUser[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchUser[] }>(
+        `https://api.twitch.tv/helix/search/channels?query=${encodeURIComponent(query)}&first=${limit}&live_only=false`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to search channels:', error);
+      return [];
     }
   }
 }

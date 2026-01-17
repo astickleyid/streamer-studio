@@ -18,6 +18,12 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export interface LocalLiveState {
+  isLive: boolean;
+  title: string;
+  category: string;
+}
+
 export interface StreamOverlayAsset {
   id: string;
   name: string;

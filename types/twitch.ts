@@ -54,3 +54,18 @@ export interface TwitchChannel {
   delay: number;
   tags: string[];
 }
+
+export interface TwitchFollowedChannel {
+  broadcaster_id: string;
+  broadcaster_login: string;
+  broadcaster_name: string;
+  followed_at: string;
+}
+
+export interface TwitchFollowsResponse {
+  data: TwitchFollowedChannel[];
+  total?: number;
+  pagination?: {
+    cursor?: string;
+  };
+}
