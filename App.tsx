@@ -4,6 +4,7 @@ import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Rad
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
 import Browse from './components/Browse';
+import PersonalizedFeed from './components/PersonalizedFeed';
 import StreamerStudio from './components/StreamerStudio';
 import UnifiedTools from './components/UnifiedTools';
 import Messages from './components/Messages';
@@ -277,7 +278,7 @@ export default function App() {
 
         <main className="flex-1 overflow-hidden relative flex flex-col bg-black pb-16 md:pb-0">
           {currentView === ViewMode.PROFILE && <UserProfile />}
-          {currentView === ViewMode.HOME && <Browse onWatch={handleWatchStream} />}
+          {currentView === ViewMode.HOME && <PersonalizedFeed onWatch={handleWatchStream} />}
           {currentView === ViewMode.EXPLORE && <Browse onWatch={handleWatchStream} />}
           {currentView === ViewMode.TOOLS && <UnifiedTools />}
           {currentView === ViewMode.MESSAGES && <Messages />}
