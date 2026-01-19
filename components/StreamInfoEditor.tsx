@@ -79,10 +79,14 @@ const StreamInfoEditor: React.FC<StreamInfoEditorProps> = ({ onClose }) => {
       searchAbortController.current.abort();
     }
     
-    // Show loading immediately
+    // Show loading immediately if query exists, otherwise clear state
     if (query.trim()) {
       setIsSearching(true);
       setSearchError('');
+    } else {
+      setIsSearching(false);
+      setCategoryResults([]);
+      setShowResults(false);
     }
     
     // Debounce the search
