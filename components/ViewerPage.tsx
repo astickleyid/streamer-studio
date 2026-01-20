@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Heart, Share2, MoreHorizontal, Gift, Play, Volume2, Maximize, Settings, Smile, Users, ExternalLink, ShieldAlert, Info, ChevronDown, Plus, Trash2, Globe, MessageSquare, X, Twitch } from 'lucide-react';
 import { ChatMessage } from '../types';
+import { Platform, PLATFORM_BADGES } from '../types/unified';
 import { getTwitchEmbedUrl, getTwitchChatUrl, getParentDomains } from '../services/twitchService';
 
 interface ViewerPageProps {
   channelName: string;
-  isTwitch?: boolean;
+  platform: Platform;
 }
 
-const ViewerPage: React.FC<ViewerPageProps> = ({ channelName, isTwitch = false }) => {
+const ViewerPage: React.FC<ViewerPageProps> = ({ channelName, platform }) => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [showDebug, setShowDebug] = useState(false);
@@ -20,6 +21,9 @@ const ViewerPage: React.FC<ViewerPageProps> = ({ channelName, isTwitch = false }
   });
   const [newParentInput, setNewParentInput] = useState("");
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const isTwitch = platform === 'twitch';
+  const platformBadge = PLATFORM_BADGES[platform];
 
   // Auto-switch chat source if it's a direct Twitch channel
   useEffect(() => {

@@ -139,7 +139,7 @@ export class TwitchAuthService {
     }
   }
 
-  private async getValidToken(): Promise<string | null> {
+  async getValidToken(): Promise<string | null> {
     if (!this.accessToken) return null;
 
     // Refresh if token expires in less than 5 minutes
