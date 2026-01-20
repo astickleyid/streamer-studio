@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel } from '../types/twitch';
+import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchGame } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
 // Auto-detect redirect URI based on environment
@@ -274,6 +274,35 @@ export class TwitchAuthService {
     } catch (error) {
       console.error('Failed to fetch stream info:', error);
       return null;
+    }
+  }
+
+  async searchCategories(query: string, signal?: AbortSignal): Promise<TwitchGame[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    if (!query || query.trim().length === 0) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchGame[] }>(
+        `https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          },
+          signal
+        }
+      );
+
+      return response.data.data || [];
+    } catch (error) {
+      if (axios.isCancel(error) || (error as any).name === 'CanceledError') {
+        // Silent handling of expected cancellation
+        return [];
+      }
+      console.error('Failed to search categories:', error);
+      return [];
     }
   }
 }
