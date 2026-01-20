@@ -122,7 +122,7 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
         {myLiveState && (
           <div 
             className="relative rounded-3xl overflow-hidden border-2 border-yellow-400 bg-zinc-900 cursor-pointer group animate-in slide-in-from-top-4"
-            onClick={() => onWatch('Local_Creator', 'native')}
+            onClick={() => window.location.hash = '#studio'}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
             <div className="relative p-8 flex items-center justify-between">

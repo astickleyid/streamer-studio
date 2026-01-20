@@ -37,30 +37,12 @@ const ViewerPage: React.FC<ViewerPageProps> = ({ channelName, platform }) => {
   useEffect(() => {
     if (!isTwitch) {
       setChatMessages([
-        { id: '1', user: 'System', text: `Welcome to ${channelName}'s native nXcor room!`, color: '#6366f1', isSystem: true, timestamp: Date.now() },
-        { id: '2', user: 'ModBot', text: 'nXcor Bridge active. You can switch to Twitch Chat in the tabs above.', color: '#10b981', isSystem: true, timestamp: Date.now() }
+        { id: '1', user: 'System', text: `Native nXcor chat will be available in the next update. For now, use Twitch chat if streaming there.`, color: '#FACC15', isSystem: true, timestamp: Date.now() }
       ]);
     }
   }, [channelName, isTwitch]);
 
-  useEffect(() => {
-    if (isTwitch) return;
-    const interval = setInterval(() => {
-      if (Math.random() > 0.6) {
-        const users = ["Viewer1", "ChillGuy", "ReactFan", "NoobMaster", "StreamLover"];
-        const msgs = ["pog", "LUL", "Insane aim!", "Wait what happened?", "Can you explain that code?", "Hi from Germany!", "This platform is so fast"];
-        const newMsg: ChatMessage = {
-          id: Date.now().toString(),
-          user: users[Math.floor(Math.random() * users.length)],
-          text: msgs[Math.floor(Math.random() * msgs.length)],
-          color: `hsl(${Math.random() * 360}, 70%, 60%)`,
-          timestamp: Date.now()
-        };
-        setChatMessages(prev => [...prev.slice(-50), newMsg]);
-      }
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [isTwitch]);
+  // Removed mock chat generation for native streams
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -160,8 +142,18 @@ const ViewerPage: React.FC<ViewerPageProps> = ({ channelName, platform }) => {
           </div>
           
           <div className="flex gap-3 w-full sm:w-auto shrink-0">
-             <button className="flex-1 sm:flex-none bg-indigo-600 hover:bg-white hover:text-black text-white px-8 md:px-12 py-3 md:py-4 rounded-2xl font-black transition-all shadow-xl shadow-indigo-600/10 text-[10px] uppercase tracking-[0.2em]">Follow</button>
-             <button className="flex-1 sm:flex-none bg-zinc-900 hover:bg-zinc-800 text-white px-8 md:px-12 py-3 md:py-4 rounded-2xl font-black border border-zinc-800 transition-all text-[10px] uppercase tracking-[0.2em]">Donate</button>
+             {/* Removed non-functional buttons - will be implemented in Sprint 4 */}
+             {isTwitch && (
+               <a 
+                 href={`https://twitch.tv/${channelName}`}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="flex-1 sm:flex-none bg-[#9146FF] hover:bg-white hover:text-black text-white px-8 md:px-12 py-3 md:py-4 rounded-2xl font-black transition-all shadow-xl text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+               >
+                 <ExternalLink size={14} />
+                 Open on Twitch
+               </a>
+             )}
           </div>
         </div>
       </div>

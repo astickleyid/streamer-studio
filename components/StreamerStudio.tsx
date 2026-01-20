@@ -286,18 +286,7 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
                 </div>
               )}
 
-              {/* Alerts Toast */}
-              {globalState.overlays.showAlerts && globalState.duration % 30 < 5 && globalState.duration > 0 && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 animate-in slide-in-from-top-10 zoom-in duration-500">
-                   <div className="bg-indigo-600 text-white px-8 py-4 rounded-full shadow-[0_0_50px_rgba(79,70,229,0.5)] border border-indigo-400 flex items-center gap-4">
-                      <Star className="animate-spin text-yellow-400" size={20} />
-                      <div className="text-center">
-                        <p className="text-[8px] font-black uppercase tracking-widest opacity-80">New Subscriber</p>
-                        <p className="text-lg font-black italic tracking-tighter uppercase">J0HNNY_D0E</p>
-                      </div>
-                   </div>
-                </div>
-              )}
+              {/* Removed mock alert toasts - will be real alerts in Sprint 4 */}
             </div>
 
             {/* LAYER 3: Scrolling Ticker */}
