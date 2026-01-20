@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw } from 'lucide-react';
+import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw, Grid } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
 import Home from './components/Home';
@@ -10,6 +10,7 @@ import UnifiedTools from './components/UnifiedTools';
 import Messages from './components/Messages';
 import Analytics from './components/Analytics';
 import ViewerPage from './components/ViewerPage';
+import MultiStreamViewer from './components/MultiStreamViewer';
 import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConfig } from './types';
 import { Platform } from './types/unified';
 import twitchAuthService from './services/twitchAuthService';
@@ -22,7 +23,8 @@ enum ViewMode {
   ANALYTICS = 'ANALYTICS',
   STUDIO = 'STUDIO',
   TOOLS = 'TOOLS',
-  WATCHING = 'WATCHING'
+  WATCHING = 'WATCHING',
+  MULTISTREAM = 'MULTISTREAM'
 }
 
 export default function App() {
@@ -268,6 +270,14 @@ export default function App() {
                    Twitch Bridge Active
                 </div>
              )}
+             <button 
+                onClick={() => setCurrentView(ViewMode.MULTISTREAM)}
+                className="hidden md:flex items-center gap-2 px-4 h-8 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-[9px] font-black text-yellow-400 uppercase tracking-widest hover:bg-yellow-400 hover:text-black transition-all"
+                title="Multi-Stream Viewer"
+             >
+                <Grid size={14} />
+                Multi-View
+             </button>
              <button className="text-zinc-600 hover:text-white transition-all">
                <Bell size={18} />
              </button>
@@ -284,6 +294,7 @@ export default function App() {
           {currentView === ViewMode.TOOLS && <UnifiedTools />}
           {currentView === ViewMode.MESSAGES && <Messages />}
           {currentView === ViewMode.ANALYTICS && <Analytics />}
+          {currentView === ViewMode.MULTISTREAM && <MultiStreamViewer onClose={() => setCurrentView(ViewMode.HOME)} />}
           {currentView === ViewMode.STUDIO && (
             <StreamerStudio 
               onEndStream={() => setCurrentView(ViewMode.PROFILE)} 
