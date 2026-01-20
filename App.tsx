@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw, Grid } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
 import Home from './components/Home';
@@ -8,12 +9,13 @@ import Explore from './components/Explore';
 import StreamerStudio from './components/StreamerStudio';
 import UnifiedTools from './components/UnifiedTools';
 import Messages from './components/Messages';
-import Analytics from './components/Analytics';
+import AnalyticsComponent from './components/Analytics';
 import ViewerPage from './components/ViewerPage';
 import MultiStreamViewer from './components/MultiStreamViewer';
 import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConfig } from './types';
 import { Platform } from './types/unified';
 import twitchAuthService from './services/twitchAuthService';
+import { reportWebVitals } from './utils/analytics';
 
 enum ViewMode {
   PROFILE = 'PROFILE',
@@ -28,6 +30,10 @@ enum ViewMode {
 }
 
 export default function App() {
+  // Initialize Web Vitals reporting
+  useEffect(() => {
+    reportWebVitals();
+  }, []);
   const [currentView, setCurrentView] = useState<ViewMode>(ViewMode.HOME);
   const [watchingChannel, setWatchingChannel] = useState<string>('');
   const [watchingPlatform, setWatchingPlatform] = useState<Platform>('twitch');

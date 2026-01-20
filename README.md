@@ -6,7 +6,7 @@
 
 A professional streaming platform with AI-powered assistance, Twitch integration, and advanced broadcasting tools.
 
-## Features
+## ✨ Features
 
 - 🎥 Live streaming with camera and screen capture
 - 🤖 AI-powered streaming suggestions using Google Gemini
@@ -17,85 +17,255 @@ A professional streaming platform with AI-powered assistance, Twitch integration
 - 💬 Chat integration
 - 🎵 Audio mixing controls
 - 🖼️ Customizable overlays and assets
+- 🧪 Comprehensive test coverage (55+ tests)
+- 🎭 End-to-end testing with Playwright
+- 📈 Web Vitals & Vercel Analytics integration
 
-## Prerequisites
+## 🚀 Quick Start
+
+### Prerequisites
 
 - Node.js (v18 or higher)
-- A Google Gemini API key (get one at https://aistudio.google.com/apikey)
+- A Google Gemini API key ([get one here](https://aistudio.google.com/apikey))
 
-## Setup
+### Installation
 
-1. Install dependencies:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/astickleyid/streamer-studio.git
+   cd streamer-studio
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Create a `.env` file with your Gemini API key:
+3. **Setup environment (automatic)**
    ```bash
-   cp .env.example .env
+   npm run setup
    ```
-   Then edit `.env` and add your API key:
-   ```
+   This will create a `.env` file from `.env.example` if it doesn't exist.
+
+4. **Add your Gemini API key**
+   
+   Edit the `.env` file and add your API key:
+   ```env
    GEMINI_API_KEY=your_api_key_here
    ```
 
-3. Run the development server:
+5. **Verify your setup**
+   ```bash
+   npm run verify
+   ```
+   This will check your Node version, dependencies, and run tests to ensure everything works.
+
+6. **Start development server**
    ```bash
    npm run dev
    ```
 
-4. Open http://localhost:3000 in your browser
+7. **Open your browser**
+   
+   Navigate to http://localhost:3000
 
-## Building for Production
+## 📦 Available Scripts
 
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server (auto-creates .env if needed) |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm test` | Run unit tests |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:e2e` | Run E2E tests with Playwright |
+| `npm run test:e2e:ui` | Run E2E tests with Playwright UI |
+| `npm run setup` | Create .env file from template |
+| `npm run verify` | Verify complete setup (Node, deps, build, tests) |
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 19 with TypeScript
+- **Build Tool**: Vite 6
+- **AI**: Google Gemini API
+- **Testing**: Vitest + React Testing Library + Playwright
+- **Icons**: Lucide React
+- **Deployment**: Vercel
+- **CI/CD**: GitHub Actions
+- **Analytics**: Vercel Analytics + Web Vitals
+
+## 🧪 Testing
+
+### Unit Tests
 ```bash
-npm run build
-npm run preview
+npm test                # Run all unit tests
+npm run test:watch      # Watch mode
 ```
 
-## Tech Stack
+**Test Coverage**: 55+ tests covering:
+- AI service integration (geminiService)
+- Twitch service functionality
+- Component rendering and interactions
+- Media device handling
+- Permission management
 
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- Google Gemini AI
-- Lucide React Icons
+### End-to-End Tests
+```bash
+npm run test:e2e        # Run E2E tests
+npm run test:e2e:ui     # Interactive UI mode
+```
 
-## Documentation
+## 🔧 Troubleshooting
 
-- **[📊 Status Report](STATUS_REPORT.md)** - Comprehensive project analysis and health check
-- **[🐛 Debugging Guide](DEBUGGING_GUIDE.md)** - Common issues and troubleshooting
-- **[🎯 Action Items](ACTION_ITEMS.md)** - Priority tasks and next steps
-- **[🔐 GitHub Secrets Setup](GITHUB_SECRETS_SETUP.md)** - CI/CD configuration guide
+### Camera/Microphone Access Denied
 
-## Project Health
+**Problem**: Browser blocks camera/microphone access.
+
+**Solution**:
+1. Click the camera icon in your browser's address bar
+2. Allow camera and microphone permissions
+3. Refresh the page
+4. In Chrome: Settings → Privacy and Security → Site Settings → Camera/Microphone
+
+### AI Features Not Working
+
+**Problem**: AI suggestions return errors or fallback messages.
+
+**Solutions**:
+1. Verify your Gemini API key is correct in `.env`
+2. Check that your API key has the necessary permissions
+3. Ensure you're not hitting rate limits
+4. Check browser console for detailed error messages
+
+### Build Failures
+
+**Problem**: `npm run build` fails with errors.
+
+**Solutions**:
+1. Clear node_modules and reinstall:
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+2. Check Node.js version (must be 18+):
+   ```bash
+   node --version
+   ```
+3. Run verification script:
+   ```bash
+   npm run verify
+   ```
+
+### Twitch Embed Not Loading
+
+**Problem**: Twitch player shows black screen or errors.
+
+**Solutions**:
+1. Check your parent domain settings
+2. Ensure you're using HTTPS in production
+3. Verify the Twitch channel is live
+4. Check browser console for specific error messages
+5. Clear browser cache and cookies
+
+### TypeScript Errors
+
+**Problem**: TypeScript compilation errors.
+
+**Solution**:
+```bash
+npx tsc --noEmit   # Check for errors without building
+```
+
+## 🌐 Browser Compatibility
+
+| Browser | Minimum Version | Notes |
+|---------|----------------|-------|
+| Chrome | 90+ | ✅ Recommended |
+| Firefox | 88+ | ✅ Full support |
+| Safari | 14+ | ✅ Full support |
+| Edge | 90+ | ✅ Full support |
+
+**Required Features**:
+- WebRTC (camera/screen capture)
+- MediaDevices API
+- ES2020+ JavaScript features
+
+## 🚢 Deployment
+
+### Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables:
+   - `GEMINI_API_KEY`: Your Gemini API key
+4. Deploy!
+
+### GitHub Actions CI/CD
+
+The project includes automated CI/CD. To enable:
+
+1. Add these secrets to your GitHub repository (Settings → Secrets → Actions):
+   - `VERCEL_TOKEN`: Create at https://vercel.com/account/tokens
+   - `VERCEL_ORG_ID`: `team_YeXUcvSknl2mbYldgH8A6ENH`
+   - `VERCEL_PROJECT_ID`: `prj_KqUeRVmkkIdfTYBdgjwZ7L8R5MAy`
+   - `GEMINI_API_KEY`: Your API key
+
+2. Push to `main` branch to trigger deployment
+
+See [GITHUB_SECRETS_SETUP.md](GITHUB_SECRETS_SETUP.md) for detailed instructions.
+
+## 📚 Documentation
+
+- **[📊 Status Report](STATUS_REPORT.md)** - Comprehensive project analysis
+- **[🐛 Debugging Guide](DEBUGGING_GUIDE.md)** - Common issues and solutions
+- **[🎯 Action Items](ACTION_ITEMS.md)** - Priority tasks and roadmap
+- **[🔐 GitHub Secrets](GITHUB_SECRETS_SETUP.md)** - CI/CD configuration guide
+
+## 📊 Project Health
 
 ✅ **Build Status**: Passing  
-✅ **Tests**: 2/2 Passing  
+✅ **Tests**: 55/55 Passing  
 ✅ **TypeScript**: No Errors  
 ✅ **Security**: No Vulnerabilities  
-⚠️  **CI/CD**: Needs GitHub Secrets Configuration
+✅ **E2E Tests**: Configured  
+✅ **Analytics**: Integrated  
 
-See [STATUS_REPORT.md](STATUS_REPORT.md) for detailed analysis.
-
-## Troubleshooting
-
-Having issues? Check the [Debugging Guide](DEBUGGING_GUIDE.md) for solutions to common problems:
-
-- Camera/microphone access denied
-- AI features not working
-- Build or test failures
-- Twitch embed issues
-- And more...
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes
-4. Run tests (`npm test`)
-5. Build the project (`npm run build`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
+4. Run tests: `npm test && npm run test:e2e`
+5. Build the project: `npm run build`
+6. Commit your changes: `git commit -m 'Add amazing feature'`
+7. Push to the branch: `git push origin feature/amazing-feature`
 8. Open a Pull Request
+
+## 🔒 Security
+
+- No secrets in code
+- Environment variables properly configured
+- Permission handling for camera/mic
+- Error boundaries for API failures
+- Regular dependency updates
+
+## 📄 License
+
+This project is proprietary software.
+
+## 🙏 Acknowledgments
+
+- Google Gemini AI for streaming assistance
+- Twitch for streaming platform integration
+- React team for the amazing framework
+- Vite team for blazing fast build tools
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/astickleyid/streamer-studio/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/astickleyid/streamer-studio/discussions)
+- **Documentation**: See `/docs` folder
+
+---
+
+**Made with ❤️ by the nXcor team**
