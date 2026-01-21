@@ -4,6 +4,8 @@ import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Rad
 import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
+import Browse from './components/Browse';
+import PersonalizedFeed from './components/PersonalizedFeed';
 import Home from './components/Home';
 import Explore from './components/Explore';
 import StreamerStudio from './components/StreamerStudio';

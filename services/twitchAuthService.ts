@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchGame } from '../types/twitch';
+import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchFollowsResponse, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
 // Auto-detect redirect URI based on environment
@@ -18,6 +18,7 @@ const TWITCH_REDIRECT_URI = getRedirectUri();
 // Twitch OAuth scopes needed for streaming
 const SCOPES = [
   'user:read:email',
+  'user:read:follows',
   'channel:manage:broadcast',
   'channel:read:stream_key',
   'channel:manage:redemptions',
@@ -277,32 +278,317 @@ export class TwitchAuthService {
     }
   }
 
-  async searchCategories(query: string, signal?: AbortSignal): Promise<TwitchGame[]> {
+  async getFollowedChannels(limit: number = 20): Promise<TwitchUser[]> {
     const token = await this.getValidToken();
     if (!token) return [];
 
-    if (!query || query.trim().length === 0) return [];
+    const user = await this.getCurrentUser();
+    if (!user) return [];
 
     try {
-      const response = await axios.get<{ data: TwitchGame[] }>(
-        `https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`,
+      const response = await axios.get<TwitchFollowsResponse>(
+        `https://api.twitch.tv/helix/channels/followed?user_id=${user.id}&first=${limit}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Client-Id': TWITCH_CLIENT_ID
-          },
-          signal
+          }
         }
       );
 
-      return response.data.data || [];
+      // Get full user details for followed channels
+      const broadcasterIds = response.data.data.map(f => f.broadcaster_id);
+      if (broadcasterIds.length === 0) return [];
+
+      const usersResponse = await axios.get<{ data: TwitchUser[] }>(
+        `https://api.twitch.tv/helix/users?${broadcasterIds.map(id => `id=${id}`).join('&')}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return usersResponse.data.data;
     } catch (error) {
-      if (axios.isCancel(error) || (error as any).name === 'CanceledError') {
-        // Silent handling of expected cancellation
-        return [];
-      }
-      console.error('Failed to search categories:', error);
+      console.error('Failed to fetch followed channels:', error);
       return [];
+    }
+  }
+
+  async getLiveFollowedStreams(): Promise<TwitchStreamInfo[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    const user = await this.getCurrentUser();
+    if (!user) return [];
+
+    try {
+      const followedChannels = await this.getFollowedChannels(100);
+      if (followedChannels.length === 0) return [];
+
+      const userIds = followedChannels.map(c => c.id);
+      
+      // Twitch API allows up to 100 user_id parameters
+      const response = await axios.get<{ data: TwitchStreamInfo[] }>(
+        `https://api.twitch.tv/helix/streams?${userIds.map(id => `user_id=${id}`).join('&')}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch live followed streams:', error);
+      return [];
+    }
+  }
+
+  async searchChannels(query: string, limit: number = 20): Promise<TwitchUser[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchUser[] }>(
+        `https://api.twitch.tv/helix/search/channels?query=${encodeURIComponent(query)}&first=${limit}&live_only=false`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to search channels:', error);
+      return [];
+    }
+  }
+
+  async getVideos(userId: string, type: 'archive' | 'highlight' | 'upload' = 'archive', limit: number = 20): Promise<TwitchVideo[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchVideo[] }>(
+        `https://api.twitch.tv/helix/videos?user_id=${userId}&first=${limit}&type=${type}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch videos:', error);
+      return [];
+    }
+  }
+
+  async getFollowedChannelsVideos(limit: number = 20): Promise<TwitchVideo[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const followedChannels = await this.getFollowedChannels(20);
+      if (followedChannels.length === 0) return [];
+
+      // Get recent VODs from followed channels
+      const videoPromises = followedChannels.slice(0, 10).map(channel => 
+        this.getVideos(channel.id, 'archive', 3)
+      );
+
+      const videosArrays = await Promise.all(videoPromises);
+      const allVideos = videosArrays.flat();
+
+      // Sort by published date
+      return allVideos.sort((a, b) => 
+        new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+      ).slice(0, limit);
+    } catch (error) {
+      console.error('Failed to fetch followed channels videos:', error);
+      return [];
+    }
+  }
+
+  async getClips(broadcasterId: string, limit: number = 20): Promise<TwitchClip[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchClip[] }>(
+        `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=${limit}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch clips:', error);
+      return [];
+    }
+  }
+
+  async getFollowedChannelsClips(limit: number = 20): Promise<TwitchClip[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const followedChannels = await this.getFollowedChannels(10);
+      if (followedChannels.length === 0) return [];
+
+      // Get recent clips from followed channels
+      const clipPromises = followedChannels.slice(0, 8).map(channel => 
+        this.getClips(channel.id, 3)
+      );
+
+      const clipsArrays = await Promise.all(clipPromises);
+      const allClips = clipsArrays.flat();
+
+      // Sort by view count and creation date
+      return allClips.sort((a, b) => 
+        b.view_count - a.view_count
+      ).slice(0, limit);
+    } catch (error) {
+      console.error('Failed to fetch followed channels clips:', error);
+      return [];
+    }
+  }
+
+  async getTopGames(limit: number = 20): Promise<TwitchGame[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchGame[] }>(
+        `https://api.twitch.tv/helix/games/top?first=${limit}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch top games:', error);
+      return [];
+    }
+  }
+
+  async getStreamsByGame(gameId: string, limit: number = 20): Promise<TwitchStreamInfo[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchStreamInfo[] }>(
+        `https://api.twitch.tv/helix/streams?game_id=${gameId}&first=${limit}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch streams by game:', error);
+      return [];
+    }
+  }
+
+  async followChannel(targetUserId: string): Promise<boolean> {
+    // Note: The Twitch API for following channels is deprecated and may not work.
+    // Twitch has removed the ability for third-party apps to follow/unfollow on behalf of users.
+    // Users should follow channels directly on Twitch.
+    const token = await this.getValidToken();
+    if (!token) return false;
+
+    const user = await this.getCurrentUser();
+    if (!user) return false;
+
+    try {
+      await axios.put(
+        `https://api.twitch.tv/helix/users/follows?from_id=${user.id}&to_id=${targetUserId}`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Failed to follow channel (API may be deprecated):', error);
+      return false;
+    }
+  }
+
+  async unfollowChannel(targetUserId: string): Promise<boolean> {
+    // Note: The Twitch API for unfollowing channels is deprecated and may not work.
+    // Twitch has removed the ability for third-party apps to follow/unfollow on behalf of users.
+    // Users should unfollow channels directly on Twitch.
+    const token = await this.getValidToken();
+    if (!token) return false;
+
+    const user = await this.getCurrentUser();
+    if (!user) return false;
+
+    try {
+      await axios.delete(
+        `https://api.twitch.tv/helix/users/follows?from_id=${user.id}&to_id=${targetUserId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Failed to unfollow channel (API may be deprecated):', error);
+      return false;
+    }
+  }
+
+  async isFollowing(targetUserId: string): Promise<boolean> {
+    const token = await this.getValidToken();
+    if (!token) return false;
+
+    const user = await this.getCurrentUser();
+    if (!user) return false;
+
+    try {
+      const response = await axios.get<{ data: TwitchFollowedChannel[] }>(
+        `https://api.twitch.tv/helix/channels/followed?user_id=${user.id}&broadcaster_id=${targetUserId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data.length > 0;
+    } catch (error) {
+      console.error('Failed to check follow status:', error);
+      return false;
     }
   }
 }
