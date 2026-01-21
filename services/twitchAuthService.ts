@@ -575,7 +575,7 @@ export class TwitchAuthService {
     if (!user) return false;
 
     try {
-      const response = await axios.get<{ data: any[] }>(
+      const response = await axios.get<{ data: TwitchFollowedChannel[] }>(
         `https://api.twitch.tv/helix/channels/followed?user_id=${user.id}&broadcaster_id=${targetUserId}`,
         {
           headers: {
