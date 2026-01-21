@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, TrendingUp, Clock, Filter, X, Radio } from 'lucide-react';
+import { Zap, TrendingUp, Clock, Filter, X, Radio, Settings, ChevronDown } from 'lucide-react';
 import { UnifiedStream, Platform, PLATFORM_BADGES } from '../types/unified';
 import unifiedStreamService from '../services/unifiedStreamService';
 import viewingHistoryService from '../services/viewingHistoryService';
+import followingService from '../services/followingService';
 import StreamCard from './StreamCard';
 
 interface HomeProps {
@@ -16,6 +17,13 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [platformFilter, setPlatformFilter] = useState<Platform | 'all'>('all');
   const [myLiveState, setMyLiveState] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [feedPreferences, setFeedPreferences] = useState({
+    showFollowing: true,
+    showRecommended: true,
+    showContinueWatching: true,
+    sortBy: 'viewers' as 'viewers' | 'recent',
+  });
 
   useEffect(() => {
     loadFeedData();
@@ -23,10 +31,18 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
     
     const interval = setInterval(loadFeedData, 30000); // Refresh every 30s
     window.addEventListener('storage', checkLiveStatus);
+    window.addEventListener('following-changed', loadFeedData);
+    
+    // Load saved preferences
+    const savedPrefs = localStorage.getItem('nx_feed_preferences');
+    if (savedPrefs) {
+      setFeedPreferences(JSON.parse(savedPrefs));
+    }
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', checkLiveStatus);
+      window.removeEventListener('following-changed', loadFeedData);
     };
   }, [platformFilter]);
 
@@ -38,19 +54,34 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
   const loadFeedData = async () => {
     setIsLoading(true);
     try {
-      // Load followed streams
-      const followed = await unifiedStreamService.getFollowedStreams();
-      const filteredFollowed = platformFilter === 'all' 
-        ? followed 
-        : followed.filter(s => s.platform === platformFilter);
-      setFollowedStreams(filteredFollowed);
+      // Load all trending/live streams
+      const allStreams = await unifiedStreamService.getTrendingStreams(platformFilter);
+      
+      // Get followed channel IDs
+      const followedIds = followingService.getAllFollowedChannels();
+      
+      // Filter followed streams (only those currently live)
+      const followed = allStreams.filter(stream =>
+        followedIds.some(fc => fc.channelId === stream.id && fc.platform === stream.platform)
+      );
+      
+      // Sort by preference
+      if (feedPreferences.sortBy === 'viewers') {
+        followed.sort((a, b) => b.viewers - a.viewers);
+      } else {
+        followed.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+      }
+      
+      setFollowedStreams(followed);
 
-      // Load recommended streams (trending for now, will use Gemini later)
-      const trending = await unifiedStreamService.getTrendingStreams(platformFilter);
-      const filteredTrending = platformFilter === 'all'
-        ? trending
-        : trending.filter(s => s.platform === platformFilter);
-      setRecommendedStreams(filteredTrending.slice(0, 8));
+      // Recommended streams (exclude followed)
+      const recommended = allStreams
+        .filter(stream =>
+          !followedIds.some(fc => fc.channelId === stream.id && fc.platform === stream.platform)
+        )
+        .slice(0, 12);
+      
+      setRecommendedStreams(recommended);
 
       // Load continue watching
       const history = viewingHistoryService.getContinueWatching();
@@ -64,6 +95,11 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
 
   const getPlatformColor = (platform: Platform) => {
     return PLATFORM_BADGES[platform].color;
+  };
+
+  const saveFeedPreferences = (newPrefs: typeof feedPreferences) => {
+    setFeedPreferences(newPrefs);
+    localStorage.setItem('nx_feed_preferences', JSON.stringify(newPrefs));
   };
 
   return (
@@ -83,6 +119,18 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
           </div>
 
           <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
+                showSettings
+                  ? 'bg-yellow-400 text-black'
+                  : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
+              }`}
+            >
+              <Settings size={12} />
+              Feed Settings
+              <ChevronDown size={12} className={`transition-transform ${showSettings ? 'rotate-180' : ''}`} />
+            </button>
             <button
               onClick={() => setPlatformFilter('all')}
               className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
@@ -117,6 +165,77 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
             </button>
           </div>
         </div>
+
+        {/* Feed Settings Panel */}
+        {showSettings && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 animate-in slide-in-from-top-4">
+            <h3 className="text-sm font-black text-white uppercase tracking-wide">Customize Your Feed</h3>
+            
+            <div className="space-y-3">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-xs text-zinc-400 font-bold">Show Following Section</span>
+                <input
+                  type="checkbox"
+                  checked={feedPreferences.showFollowing}
+                  onChange={(e) => saveFeedPreferences({ ...feedPreferences, showFollowing: e.target.checked })}
+                  className="w-10 h-5 rounded-full appearance-none cursor-pointer bg-zinc-800 checked:bg-yellow-400 relative transition-colors
+                    before:content-[''] before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 
+                    before:transition-transform checked:before:translate-x-5"
+                />
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-xs text-zinc-400 font-bold">Show Recommended Section</span>
+                <input
+                  type="checkbox"
+                  checked={feedPreferences.showRecommended}
+                  onChange={(e) => saveFeedPreferences({ ...feedPreferences, showRecommended: e.target.checked })}
+                  className="w-10 h-5 rounded-full appearance-none cursor-pointer bg-zinc-800 checked:bg-yellow-400 relative transition-colors
+                    before:content-[''] before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 
+                    before:transition-transform checked:before:translate-x-5"
+                />
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-xs text-zinc-400 font-bold">Show Continue Watching</span>
+                <input
+                  type="checkbox"
+                  checked={feedPreferences.showContinueWatching}
+                  onChange={(e) => saveFeedPreferences({ ...feedPreferences, showContinueWatching: e.target.checked })}
+                  className="w-10 h-5 rounded-full appearance-none cursor-pointer bg-zinc-800 checked:bg-yellow-400 relative transition-colors
+                    before:content-[''] before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 
+                    before:transition-transform checked:before:translate-x-5"
+                />
+              </label>
+
+              <div className="pt-3 border-t border-zinc-800">
+                <label className="block text-xs text-zinc-400 font-bold mb-2">Sort Following By</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => saveFeedPreferences({ ...feedPreferences, sortBy: 'viewers' })}
+                    className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      feedPreferences.sortBy === 'viewers'
+                        ? 'bg-yellow-400 text-black'
+                        : 'bg-zinc-800 text-zinc-500 hover:text-white'
+                    }`}
+                  >
+                    Most Viewers
+                  </button>
+                  <button
+                    onClick={() => saveFeedPreferences({ ...feedPreferences, sortBy: 'recent' })}
+                    className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      feedPreferences.sortBy === 'recent'
+                        ? 'bg-yellow-400 text-black'
+                        : 'bg-zinc-800 text-zinc-500 hover:text-white'
+                    }`}
+                  >
+                    Recently Live
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Your Live Stream Banner */}
         {myLiveState && (
@@ -153,7 +272,7 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
         )}
 
         {/* Following - Live Now */}
-        {followedStreams.length > 0 && (
+        {feedPreferences.showFollowing && followedStreams.length > 0 && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
@@ -176,7 +295,7 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
         )}
 
         {/* Continue Watching */}
-        {continueWatching.length > 0 && (
+        {feedPreferences.showContinueWatching && continueWatching.length > 0 && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
@@ -221,15 +340,16 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
         )}
 
         {/* Recommended for You */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-              <div className="w-1 h-6 bg-yellow-400 rounded-full"></div>
-              Recommended For You
-            </h2>
-          </div>
-          
-          {isLoading ? (
+        {feedPreferences.showRecommended && (
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
+                <div className="w-1 h-6 bg-yellow-400 rounded-full"></div>
+                Recommended For You
+              </h2>
+            </div>
+            
+            {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="animate-pulse">
@@ -250,9 +370,10 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
               ))}
             </div>
           )}
-        </section>
+          </section>
+        )}
 
-        {followedStreams.length === 0 && !isLoading && (
+        {feedPreferences.showFollowing && followedStreams.length === 0 && !isLoading && (
           <div className="text-center py-20">
             <div className="w-20 h-20 rounded-2xl bg-yellow-400/10 border-2 border-yellow-400/20 flex items-center justify-center mx-auto mb-6">
               <Zap className="text-yellow-400" size={32} />

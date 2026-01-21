@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw, Grid } from 'lucide-react';
+import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw, Grid, User, Twitch, Youtube } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
@@ -15,8 +15,9 @@ import AnalyticsComponent from './components/Analytics';
 import ViewerPage from './components/ViewerPage';
 import MultiStreamViewer from './components/MultiStreamViewer';
 import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConfig } from './types';
-import { Platform } from './types/unified';
+import { Platform, PLATFORM_BADGES } from './types/unified';
 import twitchAuthService from './services/twitchAuthService';
+import unifiedStreamService from './services/unifiedStreamService';
 import { reportWebVitals } from './utils/analytics';
 
 enum ViewMode {
@@ -41,6 +42,13 @@ export default function App() {
   const [watchingPlatform, setWatchingPlatform] = useState<Platform>('twitch');
   const [errorMsg, setErrorMsg] = useState<{ text: string, type: 'PERMISSION' | 'GENERIC' | 'COMPATIBILITY' } | null>(null);
   const [twitchCallbackHandling, setTwitchCallbackHandling] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchTimeoutRef = useRef<number | null>(null);
 
   // Handle Twitch OAuth callback
   useEffect(() => {
@@ -211,6 +219,70 @@ export default function App() {
     setCurrentView(ViewMode.WATCHING);
   };
 
+  // Search functionality
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      searchTimeoutRef.current = window.setTimeout(async () => {
+        setIsSearching(true);
+        try {
+          const results = await unifiedStreamService.searchStreams({
+            query: searchQuery,
+            platform: 'all',
+            type: 'streams',
+            limit: 8
+          });
+          setSearchResults(results);
+          setShowSearchResults(true);
+        } catch (error) {
+          console.error('Search error:', error);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const handleSearchResultClick = (channelName: string, platform: Platform) => {
+    setSearchQuery('');
+    setShowSearchResults(false);
+    handleWatchStream(channelName, platform);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setCurrentView(ViewMode.EXPLORE);
+      // The Explore component will pick up the search
+      setShowSearchResults(false);
+    }
+  };
+
+  const getPlatformIcon = (platform: Platform) => {
+    switch (platform) {
+      case 'twitch':
+        return <Twitch size={12} fill="currentColor" />;
+      case 'youtube':
+        return <Youtube size={12} fill="currentColor" />;
+      case 'kick':
+        return <span className="text-[8px] font-black">K</span>;
+      case 'native':
+        return <span className="text-[8px] font-black">NX</span>;
+    }
+  };
+
   // Show loading screen during Twitch callback handling
   if (twitchCallbackHandling) {
     return (
@@ -261,14 +333,96 @@ export default function App() {
                 <div className="w-full h-full bg-black rounded flex items-center justify-center font-black text-yellow-400 text-[10px]">NX</div>
              </div>
              
-             <div className="relative flex-1 group">
+             <form onSubmit={handleSearchSubmit} className="relative flex-1 group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
               <input 
                 type="text" 
-                placeholder="Find stream..." 
-                className="w-full bg-[#111] border border-zinc-800 rounded-xl py-1.5 pl-10 pr-4 text-[10px] text-zinc-200 focus:outline-none focus:border-yellow-400/30 transition-all font-black uppercase tracking-widest"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setShowSearchResults(searchResults.length > 0)}
+                placeholder="Find streams, channels..." 
+                className="w-full bg-[#111] border border-zinc-800 rounded-xl py-1.5 pl-10 pr-10 text-[10px] text-zinc-200 focus:outline-none focus:border-yellow-400/30 transition-all font-black uppercase tracking-widest"
               />
-            </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearchResults(false);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                >
+                  <X size={12} />
+                </button>
+              )}
+              {isSearching && (
+                <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                  <div className="w-3 h-3 border border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-[500] animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-zinc-800">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Search Results</p>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {searchResults.map((result) => (
+                      <button
+                        key={`${result.platform}-${result.id}`}
+                        onClick={() => handleSearchResultClick(result.channelName, result.platform)}
+                        className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-zinc-800 transition-colors text-left group/item"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-zinc-800 overflow-hidden flex-shrink-0">
+                          <img 
+                            src={result.thumbnail} 
+                            alt={result.displayName}
+                            className="w-full h-full object-cover group-hover/item:scale-110 transition-transform"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-black text-white truncate">{result.displayName}</p>
+                            <div 
+                              className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase flex items-center gap-1"
+                              style={{ 
+                                backgroundColor: `${PLATFORM_BADGES[result.platform].color}20`,
+                                color: PLATFORM_BADGES[result.platform].color
+                              }}
+                            >
+                              {getPlatformIcon(result.platform)}
+                            </div>
+                            {result.isLive && (
+                              <span className="px-1.5 py-0.5 bg-red-600 text-white text-[7px] font-black rounded uppercase">LIVE</span>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-zinc-500 font-bold truncate">{result.game || result.title}</p>
+                        </div>
+                        <div className="text-[9px] text-zinc-600 font-bold">
+                          {result.viewers?.toLocaleString()} viewers
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setCurrentView(ViewMode.EXPLORE);
+                      setShowSearchResults(false);
+                    }}
+                    className="w-full p-3 text-center text-[9px] font-black uppercase tracking-widest text-yellow-400 hover:bg-zinc-800 transition-colors border-t border-zinc-800"
+                  >
+                    See All Results in Explore →
+                  </button>
+                </div>
+              )}
+
+              {showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !isSearching && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-4 z-[500] animate-in fade-in slide-in-from-top-2">
+                  <p className="text-xs text-zinc-500 text-center font-bold">No results found for "{searchQuery}"</p>
+                </div>
+              )}
+            </form>
           </div>
           
           <div className="flex items-center gap-3 ml-4">

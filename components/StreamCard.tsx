@@ -1,6 +1,7 @@
-import React from 'react';
-import { Users, Twitch, Youtube } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Twitch, Youtube, Heart } from 'lucide-react';
 import { UnifiedStream, Platform, PLATFORM_BADGES } from '../types/unified';
+import followingService from '../services/followingService';
 
 interface StreamCardProps {
   stream: UnifiedStream;
@@ -9,6 +10,32 @@ interface StreamCardProps {
 
 const StreamCard: React.FC<StreamCardProps> = ({ stream, onWatch }) => {
   const badge = PLATFORM_BADGES[stream.platform];
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    setIsFollowing(followingService.isFollowing(stream.platform, stream.id));
+    
+    const handleFollowingChange = () => {
+      setIsFollowing(followingService.isFollowing(stream.platform, stream.id));
+    };
+    
+    window.addEventListener('following-changed', handleFollowingChange);
+    return () => window.removeEventListener('following-changed', handleFollowingChange);
+  }, [stream.platform, stream.id]);
+
+  const handleFollowClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isFollowing) {
+      followingService.unfollowChannel(stream.platform, stream.id);
+    } else {
+      followingService.followChannel({
+        platform: stream.platform,
+        channelId: stream.id,
+        channelName: stream.channelName,
+        avatar: stream.thumbnail,
+      });
+    }
+  };
   
   const getPlatformIcon = () => {
     switch (stream.platform) {
@@ -88,6 +115,19 @@ const StreamCard: React.FC<StreamCardProps> = ({ stream, onWatch }) => {
         <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/70 backdrop-blur-md rounded-lg text-[9px] text-zinc-400 font-bold">
           {formatUptime(stream.startedAt)}
         </div>
+
+        {/* Follow Button */}
+        <button
+          onClick={handleFollowClick}
+          className={`absolute top-3 right-3 p-2 rounded-lg backdrop-blur-md transition-all border opacity-0 group-hover:opacity-100 ${
+            isFollowing
+              ? 'bg-red-500/80 border-red-400 text-white hover:bg-red-600'
+              : 'bg-black/70 border-white/10 text-white hover:bg-yellow-400 hover:border-yellow-400 hover:text-black'
+          }`}
+          title={isFollowing ? 'Unfollow' : 'Follow'}
+        >
+          <Heart size={14} fill={isFollowing ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       {/* Stream Info */}
