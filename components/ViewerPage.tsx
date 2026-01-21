@@ -3,6 +3,7 @@ import { Send, Heart, Share2, MoreHorizontal, Gift, Play, Volume2, Maximize, Set
 import { ChatMessage } from '../types';
 import { Platform, PLATFORM_BADGES } from '../types/unified';
 import { getTwitchEmbedUrl, getTwitchChatUrl, getParentDomains } from '../services/twitchService';
+import Chat from './Chat/Chat';
 
 interface ViewerPageProps {
   channelName: string;
@@ -202,35 +203,9 @@ const ViewerPage: React.FC<ViewerPageProps> = ({ channelName, platform }) => {
             </div>
           </div>
         ) : (
-          <>
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-8 space-y-5 scrollbar-hide">
-              {chatMessages.map((msg) => (
-                <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-start gap-4">
-                     <div className="w-9 h-9 rounded-xl bg-zinc-900 shrink-0 border border-zinc-800 flex items-center justify-center shadow-lg">
-                        <span className="text-[11px] font-black" style={{ color: msg.color }}>{msg.user[0]}</span>
-                     </div>
-                     <div className="min-w-0">
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: msg.color }}>{msg.user}</p>
-                        <p className="text-zinc-300 text-sm leading-relaxed font-medium break-words">{msg.text}</p>
-                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="p-8 border-t border-zinc-900 bg-black/40">
-              <form onSubmit={sendMessage} className="relative group">
-                <input 
-                  type="text" 
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Send a message..." 
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-5 px-6 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-medium pr-14 shadow-inner"
-                />
-                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 bg-indigo-600 text-white p-3 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl"><Send size={18} /></button>
-              </form>
-            </div>
-          </>
+          <div className="flex-1 min-h-0">
+            <Chat channelId={`${platform}_${channelName}`} channelName={channelName} className="h-full border-0 rounded-none" />
+          </div>
         )}
       </div>
 
