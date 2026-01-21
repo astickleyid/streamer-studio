@@ -69,3 +69,49 @@ export interface TwitchFollowsResponse {
     cursor?: string;
   };
 }
+
+export interface TwitchVideo {
+  id: string;
+  stream_id: string | null;
+  user_id: string;
+  user_login: string;
+  user_name: string;
+  title: string;
+  description: string;
+  created_at: string;
+  published_at: string;
+  url: string;
+  thumbnail_url: string;
+  viewable: string;
+  view_count: number;
+  language: string;
+  type: 'upload' | 'archive' | 'highlight';
+  duration: string;
+  muted_segments: Array<{ duration: number; offset: number }> | null;
+}
+
+export interface TwitchClip {
+  id: string;
+  url: string;
+  embed_url: string;
+  broadcaster_id: string;
+  broadcaster_name: string;
+  creator_id: string;
+  creator_name: string;
+  video_id: string;
+  game_id: string;
+  language: string;
+  title: string;
+  view_count: number;
+  created_at: string;
+  thumbnail_url: string;
+  duration: number;
+  vod_offset: number | null;
+}
+
+export interface TwitchGame {
+  id: string;
+  name: string;
+  box_art_url: string;
+  igdb_id: string;
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter } from 'lucide-react';
+import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play } from 'lucide-react';
 import twitchAuthService from '../services/twitchAuthService';
-import { TwitchUser, TwitchStreamInfo } from '../types/twitch';
+import { TwitchUser, TwitchStreamInfo, TwitchVideo, TwitchClip } from '../types/twitch';
 import { LocalLiveState } from '../types';
 
 // Constants for external URLs
@@ -12,6 +12,31 @@ const UI_AVATARS_API_URL = 'https://ui-avatars.com/api';
 interface PersonalizedFeedProps {
   onWatch: (channelName: string, isTwitch?: boolean) => void;
 }
+
+// Helper to format duration from ISO 8601 format (e.g., "1h23m45s")
+const formatDuration = (duration: string): string => {
+  const match = duration.match(/(\d+h)?(\d+m)?(\d+s)?/);
+  if (!match) return duration;
+  
+  const hours = match[1] ? match[1].replace('h', 'h ') : '';
+  const minutes = match[2] ? match[2].replace('m', 'm ') : '';
+  const seconds = match[3] ? match[3].replace('s', 's') : '';
+  
+  return (hours + minutes + seconds).trim();
+};
+
+// Helper to format time ago
+const timeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return `${Math.floor(seconds / 604800)}w ago`;
+};
 
 const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [activeCategory, setActiveCategory] = useState("Following");
@@ -25,8 +50,12 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [searchResults, setSearchResults] = useState<TwitchUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [sortBy, setSortBy] = useState<'viewers' | 'recent'>('viewers');
+  const [recentVODs, setRecentVODs] = useState<TwitchVideo[]>([]);
+  const [trendingClips, setTrendingClips] = useState<TwitchClip[]>([]);
+  const [loadingVODs, setLoadingVODs] = useState(false);
+  const [loadingClips, setLoadingClips] = useState(false);
   
-  const categories = ["Following", "Live Now", "All Channels", "Discover"];
+  const categories = ["Following", "Live Now", "All Channels", "VODs", "Clips"];
 
   useEffect(() => {
     const checkLiveStatus = () => {
@@ -64,6 +93,48 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
     }
     setLoading(false);
   };
+
+  const loadVODs = async () => {
+    if (loadingVODs || recentVODs.length > 0) return;
+    
+    setLoadingVODs(true);
+    try {
+      const vods = await twitchAuthService.getFollowedChannelsVideos(12);
+      setRecentVODs(vods);
+    } catch (error) {
+      console.error('Failed to load VODs:', error);
+    } finally {
+      setLoadingVODs(false);
+    }
+  };
+
+  const loadClips = async () => {
+    if (loadingClips || trendingClips.length > 0) return;
+    
+    setLoadingClips(true);
+    try {
+      const clips = await twitchAuthService.getFollowedChannelsClips(12);
+      setTrendingClips(clips);
+    } catch (error) {
+      console.error('Failed to load clips:', error);
+    } finally {
+      setLoadingClips(false);
+    }
+  };
+
+  // Load VODs when VODs tab is selected
+  useEffect(() => {
+    if (activeCategory === 'VODs' && isAuthenticated) {
+      loadVODs();
+    }
+  }, [activeCategory, isAuthenticated]);
+
+  // Load Clips when Clips tab is selected
+  useEffect(() => {
+    if (activeCategory === 'Clips' && isAuthenticated) {
+      loadClips();
+    }
+  }, [activeCategory, isAuthenticated]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
@@ -354,6 +425,145 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
           <h3 className="text-xl font-black uppercase tracking-tight text-zinc-400 mb-2">No Followed Channels</h3>
           <p className="text-zinc-600 text-sm">Start following channels on Twitch to see them here!</p>
         </div>
+      )}
+
+      {/* VODs Section */}
+      {activeCategory === "VODs" && (
+        <section className="mb-10">
+          <h2 className="text-[9px] font-black mb-6 flex items-center gap-2 uppercase tracking-[0.3em] text-zinc-600">
+            <Video size={14} className="text-purple-500" /> Recent Broadcasts from Followed Channels
+          </h2>
+          {loadingVODs ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 size={48} className="animate-spin text-purple-500" />
+            </div>
+          ) : recentVODs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {recentVODs.map((vod) => (
+                <a
+                  key={vod.id}
+                  href={vod.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group cursor-pointer"
+                >
+                  <div className="relative aspect-video bg-zinc-900 rounded-2xl overflow-hidden mb-3 border border-zinc-800 transition-all group-hover:border-purple-500">
+                    <img 
+                      src={vod.thumbnail_url.replace('%{width}', '440').replace('%{height}', '248')} 
+                      className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
+                      alt={vod.title}
+                      onError={(e) => {
+                        e.currentTarget.src = PLACEHOLDER_IMAGE_URL;
+                      }}
+                    />
+                    <div className="absolute top-3 left-3 bg-purple-600 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest">VOD</div>
+                    <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] text-white font-black flex items-center gap-1.5">
+                      <Clock size={10} /> {formatDuration(vod.duration)}
+                    </div>
+                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] text-white font-black flex items-center gap-1.5">
+                      <Eye size={10} /> {vod.view_count.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="flex gap-3 px-1">
+                    <div className="w-10 h-10 rounded-lg bg-zinc-900 overflow-hidden ring-1 ring-zinc-800 flex-shrink-0">
+                      <img 
+                        src={`${TWITCH_CDN_PROFILE_IMAGE_URL}/${vod.user_login}-profile_image-70x70.png`} 
+                        onError={(e) => (e.currentTarget.src = `${UI_AVATARS_API_URL}/?name=${vod.user_name}&background=9146FF&color=fff&size=70`)}
+                        className="w-full h-full object-cover" 
+                        alt="avatar" 
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-black text-xs text-zinc-200 group-hover:text-purple-400 transition-colors truncate uppercase italic tracking-tighter">{vod.user_name}</h3>
+                      <p className="text-[9px] text-zinc-500 mt-1 line-clamp-2">{vod.title}</p>
+                      <p className="text-[8px] text-zinc-600 font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
+                        <Calendar size={8} /> {timeAgo(vod.published_at)}
+                      </p>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <Video size={48} className="mx-auto mb-4 text-zinc-700" />
+              <h3 className="text-lg font-black uppercase tracking-tight text-zinc-400 mb-2">No Recent VODs</h3>
+              <p className="text-zinc-600 text-sm">Followed channels haven't uploaded any recent broadcasts.</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Clips Section */}
+      {activeCategory === "Clips" && (
+        <section className="mb-10">
+          <h2 className="text-[9px] font-black mb-6 flex items-center gap-2 uppercase tracking-[0.3em] text-zinc-600">
+            <Film size={14} className="text-pink-500" /> Trending Clips from Followed Channels
+          </h2>
+          {loadingClips ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 size={48} className="animate-spin text-pink-500" />
+            </div>
+          ) : trendingClips.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {trendingClips.map((clip) => (
+                <a
+                  key={clip.id}
+                  href={clip.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group cursor-pointer"
+                >
+                  <div className="relative aspect-video bg-zinc-900 rounded-2xl overflow-hidden mb-3 border border-zinc-800 transition-all group-hover:border-pink-500">
+                    <img 
+                      src={clip.thumbnail_url} 
+                      className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
+                      alt={clip.title}
+                      onError={(e) => {
+                        e.currentTarget.src = PLACEHOLDER_IMAGE_URL;
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-pink-500 rounded-full p-3">
+                        <Play size={24} className="text-white" fill="white" />
+                      </div>
+                    </div>
+                    <div className="absolute top-3 left-3 bg-pink-600 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest">CLIP</div>
+                    <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] text-white font-black flex items-center gap-1.5">
+                      <Clock size={10} /> {clip.duration}s
+                    </div>
+                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] text-white font-black flex items-center gap-1.5">
+                      <Eye size={10} /> {clip.view_count.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="flex gap-3 px-1">
+                    <div className="w-10 h-10 rounded-lg bg-zinc-900 overflow-hidden ring-1 ring-zinc-800 flex-shrink-0">
+                      <img 
+                        src={`${TWITCH_CDN_PROFILE_IMAGE_URL}/${clip.broadcaster_name}-profile_image-70x70.png`} 
+                        onError={(e) => (e.currentTarget.src = `${UI_AVATARS_API_URL}/?name=${clip.broadcaster_name}&background=9146FF&color=fff&size=70`)}
+                        className="w-full h-full object-cover" 
+                        alt="avatar" 
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-black text-xs text-zinc-200 group-hover:text-pink-400 transition-colors truncate uppercase italic tracking-tighter">{clip.broadcaster_name}</h3>
+                      <p className="text-[9px] text-zinc-500 mt-1 line-clamp-2">{clip.title}</p>
+                      <p className="text-[8px] text-zinc-600 font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
+                        <Calendar size={8} /> {timeAgo(clip.created_at)} • by {clip.creator_name}
+                      </p>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <Film size={48} className="mx-auto mb-4 text-zinc-700" />
+              <h3 className="text-lg font-black uppercase tracking-tight text-zinc-400 mb-2">No Clips Available</h3>
+              <p className="text-zinc-600 text-sm">No clips found from your followed channels.</p>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
