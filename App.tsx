@@ -1,17 +1,23 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw } from 'lucide-react';
+import { Search, Bell, ChevronRight, Mic, MicOff, Video, VideoOff, Settings, Radio, X, Layout, Maximize2, Monitor, AlertCircle, RefreshCcw, Grid } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
 import Browse from './components/Browse';
 import PersonalizedFeed from './components/PersonalizedFeed';
+import Home from './components/Home';
+import Explore from './components/Explore';
 import StreamerStudio from './components/StreamerStudio';
 import UnifiedTools from './components/UnifiedTools';
 import Messages from './components/Messages';
-import Analytics from './components/Analytics';
+import AnalyticsComponent from './components/Analytics';
 import ViewerPage from './components/ViewerPage';
+import MultiStreamViewer from './components/MultiStreamViewer';
 import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConfig } from './types';
+import { Platform } from './types/unified';
 import twitchAuthService from './services/twitchAuthService';
+import { reportWebVitals } from './utils/analytics';
 
 enum ViewMode {
   PROFILE = 'PROFILE',
@@ -21,13 +27,18 @@ enum ViewMode {
   ANALYTICS = 'ANALYTICS',
   STUDIO = 'STUDIO',
   TOOLS = 'TOOLS',
-  WATCHING = 'WATCHING'
+  WATCHING = 'WATCHING',
+  MULTISTREAM = 'MULTISTREAM'
 }
 
 export default function App() {
+  // Initialize Web Vitals reporting
+  useEffect(() => {
+    reportWebVitals();
+  }, []);
   const [currentView, setCurrentView] = useState<ViewMode>(ViewMode.HOME);
   const [watchingChannel, setWatchingChannel] = useState<string>('');
-  const [isWatchingTwitch, setIsWatchingTwitch] = useState(false);
+  const [watchingPlatform, setWatchingPlatform] = useState<Platform>('twitch');
   const [errorMsg, setErrorMsg] = useState<{ text: string, type: 'PERMISSION' | 'GENERIC' | 'COMPATIBILITY' } | null>(null);
   const [twitchCallbackHandling, setTwitchCallbackHandling] = useState(false);
 
@@ -194,9 +205,9 @@ export default function App() {
 
   const handleNavigate = (view: string) => setCurrentView(view as ViewMode);
 
-  const handleWatchStream = (channel: string, isTwitch: boolean = false) => {
+  const handleWatchStream = (channel: string, platform: Platform = 'twitch') => {
     setWatchingChannel(channel);
-    setIsWatchingTwitch(isTwitch);
+    setWatchingPlatform(platform);
     setCurrentView(ViewMode.WATCHING);
   };
 
@@ -267,6 +278,14 @@ export default function App() {
                    Twitch Bridge Active
                 </div>
              )}
+             <button 
+                onClick={() => setCurrentView(ViewMode.MULTISTREAM)}
+                className="hidden md:flex items-center gap-2 px-4 h-8 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-[9px] font-black text-yellow-400 uppercase tracking-widest hover:bg-yellow-400 hover:text-black transition-all"
+                title="Multi-Stream Viewer"
+             >
+                <Grid size={14} />
+                Multi-View
+             </button>
              <button className="text-zinc-600 hover:text-white transition-all">
                <Bell size={18} />
              </button>
@@ -278,11 +297,12 @@ export default function App() {
 
         <main className="flex-1 overflow-hidden relative flex flex-col bg-black pb-16 md:pb-0">
           {currentView === ViewMode.PROFILE && <UserProfile />}
-          {currentView === ViewMode.HOME && <PersonalizedFeed onWatch={handleWatchStream} />}
-          {currentView === ViewMode.EXPLORE && <Browse onWatch={handleWatchStream} />}
+          {currentView === ViewMode.HOME && <Home onWatch={handleWatchStream} />}
+          {currentView === ViewMode.EXPLORE && <Explore onWatch={handleWatchStream} />}
           {currentView === ViewMode.TOOLS && <UnifiedTools />}
           {currentView === ViewMode.MESSAGES && <Messages />}
           {currentView === ViewMode.ANALYTICS && <Analytics />}
+          {currentView === ViewMode.MULTISTREAM && <MultiStreamViewer onClose={() => setCurrentView(ViewMode.HOME)} />}
           {currentView === ViewMode.STUDIO && (
             <StreamerStudio 
               onEndStream={() => setCurrentView(ViewMode.PROFILE)} 
@@ -295,7 +315,7 @@ export default function App() {
             />
           )}
           {currentView === ViewMode.WATCHING && (
-             <ViewerPage channelName={watchingChannel} isTwitch={isWatchingTwitch} />
+             <ViewerPage channelName={watchingChannel} platform={watchingPlatform} />
           )}
 
           {streamState.status === StreamStatus.LIVE && currentView !== ViewMode.STUDIO && (

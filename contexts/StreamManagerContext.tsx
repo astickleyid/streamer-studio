@@ -12,7 +12,7 @@ interface StreamManagerContextType {
   
   // Actions
   refreshTwitchData: () => Promise<void>;
-  updateStreamTitle: (title: string) => Promise<boolean>;
+  updateStreamTitle: (title: string, gameId?: string) => Promise<boolean>;
   updateStreamCategory: (gameId: string, gameName: string) => Promise<boolean>;
   goLiveOnTwitch: (title: string, gameId?: string) => Promise<boolean>;
   
@@ -69,9 +69,9 @@ export const StreamManagerProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   };
 
-  const updateStreamTitle = async (title: string): Promise<boolean> => {
+  const updateStreamTitle = async (title: string, gameId?: string): Promise<boolean> => {
     try {
-      const success = await twitchAuthService.updateChannelInfo(title);
+      const success = await twitchAuthService.updateChannelInfo(title, gameId);
       if (success) {
         await refreshTwitchData();
         setLocalStreamTitle(title);
