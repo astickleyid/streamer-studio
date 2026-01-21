@@ -511,6 +511,9 @@ export class TwitchAuthService {
   }
 
   async followChannel(targetUserId: string): Promise<boolean> {
+    // Note: The Twitch API for following channels is deprecated and may not work.
+    // Twitch has removed the ability for third-party apps to follow/unfollow on behalf of users.
+    // Users should follow channels directly on Twitch.
     const token = await this.getValidToken();
     if (!token) return false;
 
@@ -531,12 +534,15 @@ export class TwitchAuthService {
 
       return true;
     } catch (error) {
-      console.error('Failed to follow channel:', error);
+      console.error('Failed to follow channel (API may be deprecated):', error);
       return false;
     }
   }
 
   async unfollowChannel(targetUserId: string): Promise<boolean> {
+    // Note: The Twitch API for unfollowing channels is deprecated and may not work.
+    // Twitch has removed the ability for third-party apps to follow/unfollow on behalf of users.
+    // Users should unfollow channels directly on Twitch.
     const token = await this.getValidToken();
     if (!token) return false;
 
@@ -556,7 +562,7 @@ export class TwitchAuthService {
 
       return true;
     } catch (error) {
-      console.error('Failed to unfollow channel:', error);
+      console.error('Failed to unfollow channel (API may be deprecated):', error);
       return false;
     }
   }

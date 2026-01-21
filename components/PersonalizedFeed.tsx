@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play, Gamepad2, Star, UserPlus, UserMinus } from 'lucide-react';
+import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play, Gamepad2, Star, UserPlus } from 'lucide-react';
 import twitchAuthService from '../services/twitchAuthService';
 import { TwitchUser, TwitchStreamInfo, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
 import { LocalLiveState } from '../types';
@@ -60,7 +60,6 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [loadingGames, setLoadingGames] = useState(false);
   const [loadingGameStreams, setLoadingGameStreams] = useState(false);
   const [followingStatus, setFollowingStatus] = useState<Record<string, boolean>>({});
-  const [followActionLoading, setFollowActionLoading] = useState<Record<string, boolean>>({});
   
   const categories = ["Following", "Live Now", "All Channels", "VODs", "Clips", "Browse Games"];
 
@@ -208,31 +207,10 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
     }
   };
 
-  const handleFollowToggle = async (channelId: string, currentlyFollowing: boolean) => {
-    setFollowActionLoading(prev => ({ ...prev, [channelId]: true }));
-    
-    try {
-      const success = currentlyFollowing 
-        ? await twitchAuthService.unfollowChannel(channelId)
-        : await twitchAuthService.followChannel(channelId);
-      
-      if (success) {
-        setFollowingStatus(prev => ({ ...prev, [channelId]: !currentlyFollowing }));
-        // Reload followed channels if we followed/unfollowed
-        if (currentlyFollowing) {
-          // Unfollowed - remove from list
-          setFollowedChannels(prev => prev.filter(c => c.id !== channelId));
-        } else {
-          // Followed - reload the list
-          const followed = await twitchAuthService.getFollowedChannels(50);
-          setFollowedChannels(followed);
-        }
-      }
-    } catch (error) {
-      console.error('Follow toggle failed:', error);
-    } finally {
-      setFollowActionLoading(prev => ({ ...prev, [channelId]: false }));
-    }
+  const handleFollowToggle = async (channelId: string, channelLogin: string, currentlyFollowing: boolean) => {
+    // Note: Twitch has deprecated the follow/unfollow API for third-party apps.
+    // We'll open the channel page on Twitch where users can follow/unfollow.
+    window.open(`https://www.twitch.tv/${channelLogin}`, '_blank');
   };
 
   const handleLogin = () => {
@@ -380,20 +358,21 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
                     </div>
                   </button>
                   <button
-                    onClick={() => handleFollowToggle(channel.id, followingStatus[channel.id] || false)}
-                    disabled={followActionLoading[channel.id]}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFollowToggle(channel.id, channel.login, followingStatus[channel.id] || false);
+                    }}
+                    title={followingStatus[channel.id] ? "Open on Twitch to unfollow" : "Open on Twitch to follow"}
                     className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 flex-shrink-0 ${
                       followingStatus[channel.id]
-                        ? 'bg-zinc-800 text-zinc-400 hover:bg-red-500/20 hover:text-red-500'
+                        ? 'bg-zinc-800 text-zinc-400 hover:bg-purple-600 hover:text-white'
                         : 'bg-purple-600 text-white hover:bg-purple-700'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    }`}
                   >
-                    {followActionLoading[channel.id] ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : followingStatus[channel.id] ? (
+                    {followingStatus[channel.id] ? (
                       <>
-                        <UserMinus size={12} />
-                        Unfollow
+                        <UserCheck size={12} />
+                        Following
                       </>
                     ) : (
                       <>
