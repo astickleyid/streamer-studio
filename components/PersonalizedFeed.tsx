@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play } from 'lucide-react';
+import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play, Gamepad2, Star } from 'lucide-react';
 import twitchAuthService from '../services/twitchAuthService';
-import { TwitchUser, TwitchStreamInfo, TwitchVideo, TwitchClip } from '../types/twitch';
+import { TwitchUser, TwitchStreamInfo, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
 import { LocalLiveState } from '../types';
 
 // Constants for external URLs
@@ -54,8 +54,13 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [trendingClips, setTrendingClips] = useState<TwitchClip[]>([]);
   const [loadingVODs, setLoadingVODs] = useState(false);
   const [loadingClips, setLoadingClips] = useState(false);
+  const [topGames, setTopGames] = useState<TwitchGame[]>([]);
+  const [selectedGame, setSelectedGame] = useState<TwitchGame | null>(null);
+  const [gameStreams, setGameStreams] = useState<TwitchStreamInfo[]>([]);
+  const [loadingGames, setLoadingGames] = useState(false);
+  const [loadingGameStreams, setLoadingGameStreams] = useState(false);
   
-  const categories = ["Following", "Live Now", "All Channels", "VODs", "Clips"];
+  const categories = ["Following", "Live Now", "All Channels", "VODs", "Clips", "Browse Games"];
 
   useEffect(() => {
     const checkLiveStatus = () => {
@@ -122,6 +127,33 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
     }
   };
 
+  const loadGames = async () => {
+    if (loadingGames || topGames.length > 0) return;
+    
+    setLoadingGames(true);
+    try {
+      const games = await twitchAuthService.getTopGames(20);
+      setTopGames(games);
+    } catch (error) {
+      console.error('Failed to load games:', error);
+    } finally {
+      setLoadingGames(false);
+    }
+  };
+
+  const loadGameStreams = async (game: TwitchGame) => {
+    setSelectedGame(game);
+    setLoadingGameStreams(true);
+    try {
+      const streams = await twitchAuthService.getStreamsByGame(game.id, 20);
+      setGameStreams(streams);
+    } catch (error) {
+      console.error('Failed to load game streams:', error);
+    } finally {
+      setLoadingGameStreams(false);
+    }
+  };
+
   // Load VODs when VODs tab is selected
   useEffect(() => {
     if (activeCategory === 'VODs' && isAuthenticated) {
@@ -133,6 +165,13 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   useEffect(() => {
     if (activeCategory === 'Clips' && isAuthenticated) {
       loadClips();
+    }
+  }, [activeCategory, isAuthenticated]);
+
+  // Load Games when Browse Games tab is selected
+  useEffect(() => {
+    if (activeCategory === 'Browse Games' && isAuthenticated) {
+      loadGames();
     }
   }, [activeCategory, isAuthenticated]);
 
@@ -562,6 +601,118 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
               <h3 className="text-lg font-black uppercase tracking-tight text-zinc-400 mb-2">No Clips Available</h3>
               <p className="text-zinc-600 text-sm">No clips found from your followed channels.</p>
             </div>
+          )}
+        </section>
+      )}
+
+      {/* Browse Games Section */}
+      {activeCategory === "Browse Games" && (
+        <section className="mb-10">
+          {!selectedGame ? (
+            <>
+              <h2 className="text-[9px] font-black mb-6 flex items-center gap-2 uppercase tracking-[0.3em] text-zinc-600">
+                <Gamepad2 size={14} className="text-cyan-500" /> Browse by Category
+              </h2>
+              {loadingGames ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 size={48} className="animate-spin text-cyan-500" />
+                </div>
+              ) : topGames.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+                  {topGames.map((game) => (
+                    <button
+                      key={game.id}
+                      onClick={() => loadGameStreams(game)}
+                      className="group cursor-pointer text-left"
+                    >
+                      <div className="relative aspect-[3/4] bg-zinc-900 rounded-2xl overflow-hidden mb-3 border border-zinc-800 transition-all group-hover:border-cyan-500">
+                        <img 
+                          src={game.box_art_url.replace('{width}', '285').replace('{height}', '380')} 
+                          className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
+                          alt={game.name}
+                          onError={(e) => {
+                            e.currentTarget.src = PLACEHOLDER_IMAGE_URL;
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                          <Star size={20} className="text-cyan-500" />
+                        </div>
+                      </div>
+                      <h3 className="font-black text-sm text-zinc-200 group-hover:text-cyan-400 transition-colors truncate uppercase">{game.name}</h3>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20">
+                  <Gamepad2 size={48} className="mx-auto mb-4 text-zinc-700" />
+                  <h3 className="text-lg font-black uppercase tracking-tight text-zinc-400 mb-2">No Games Available</h3>
+                  <p className="text-zinc-600 text-sm">Unable to load game categories.</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <button
+                  onClick={() => {
+                    setSelectedGame(null);
+                    setGameStreams([]);
+                  }}
+                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                >
+                  ← Back to Games
+                </button>
+                <h2 className="text-[9px] font-black flex items-center gap-2 uppercase tracking-[0.3em] text-zinc-600">
+                  <Gamepad2 size={14} className="text-cyan-500" /> {selectedGame.name}
+                </h2>
+              </div>
+              {loadingGameStreams ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 size={48} className="animate-spin text-cyan-500" />
+                </div>
+              ) : gameStreams.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {gameStreams.map((stream) => (
+                    <div key={stream.id} className="group cursor-pointer" onClick={() => onWatch(stream.user_login, true)}>
+                      <div className="relative aspect-video bg-zinc-900 rounded-2xl overflow-hidden mb-3 border border-zinc-800 transition-all group-hover:border-cyan-500">
+                        <img 
+                          src={stream.thumbnail_url.replace('{width}', '440').replace('{height}', '248')} 
+                          className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
+                          alt={stream.user_name}
+                          onError={(e) => {
+                            e.currentTarget.src = PLACEHOLDER_IMAGE_URL;
+                          }}
+                        />
+                        <div className="absolute top-3 left-3 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-xl animate-pulse">LIVE</div>
+                        <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] text-white font-black flex items-center gap-1.5 border border-white/5">
+                          <Users size={10} className="text-red-500" /> {stream.viewer_count.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex gap-3 px-1">
+                        <div className="w-10 h-10 rounded-lg bg-zinc-900 overflow-hidden ring-1 ring-zinc-800 flex-shrink-0">
+                          <img 
+                            src={`${TWITCH_CDN_PROFILE_IMAGE_URL}/${stream.user_login}-profile_image-70x70.png`} 
+                            onError={(e) => (e.currentTarget.src = `${UI_AVATARS_API_URL}/?name=${stream.user_name}&background=9146FF&color=fff&size=70`)}
+                            className="w-full h-full object-cover" 
+                            alt="avatar" 
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-black text-xs text-zinc-200 group-hover:text-cyan-400 transition-colors truncate uppercase italic tracking-tighter">{stream.user_name}</h3>
+                          <p className="text-[9px] text-zinc-500 mt-1 line-clamp-2">{stream.title}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20">
+                  <Users size={48} className="mx-auto mb-4 text-zinc-700" />
+                  <h3 className="text-lg font-black uppercase tracking-tight text-zinc-400 mb-2">No Live Streams</h3>
+                  <p className="text-zinc-600 text-sm">No channels are currently streaming {selectedGame.name}.</p>
+                </div>
+              )}
+            </>
           )}
         </section>
       )}
