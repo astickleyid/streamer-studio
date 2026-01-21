@@ -560,6 +560,31 @@ export class TwitchAuthService {
       return false;
     }
   }
+
+  async isFollowing(targetUserId: string): Promise<boolean> {
+    const token = await this.getValidToken();
+    if (!token) return false;
+
+    const user = await this.getCurrentUser();
+    if (!user) return false;
+
+    try {
+      const response = await axios.get<{ data: any[] }>(
+        `https://api.twitch.tv/helix/channels/followed?user_id=${user.id}&broadcaster_id=${targetUserId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          }
+        }
+      );
+
+      return response.data.data.length > 0;
+    } catch (error) {
+      console.error('Failed to check follow status:', error);
+      return false;
+    }
+  }
 }
 
 export default TwitchAuthService.getInstance();

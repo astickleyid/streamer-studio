@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play, Gamepad2, Star } from 'lucide-react';
+import { Users, Globe, ExternalLink, Zap, Radio, Loader2, UserCheck, TrendingUp, Search, Filter, Video, Film, Clock, Eye, Calendar, Play, Gamepad2, Star, UserPlus, UserMinus } from 'lucide-react';
 import twitchAuthService from '../services/twitchAuthService';
 import { TwitchUser, TwitchStreamInfo, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
 import { LocalLiveState } from '../types';
@@ -59,6 +59,8 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
   const [gameStreams, setGameStreams] = useState<TwitchStreamInfo[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
   const [loadingGameStreams, setLoadingGameStreams] = useState(false);
+  const [followingStatus, setFollowingStatus] = useState<Record<string, boolean>>({});
+  const [followActionLoading, setFollowActionLoading] = useState<Record<string, boolean>>({});
   
   const categories = ["Following", "Live Now", "All Channels", "VODs", "Clips", "Browse Games"];
 
@@ -186,10 +188,50 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
     try {
       const results = await twitchAuthService.searchChannels(query);
       setSearchResults(results);
+      
+      // Check follow status for each result
+      const statusChecks = results.map(async (channel) => {
+        const isFollowing = await twitchAuthService.isFollowing(channel.id);
+        return { id: channel.id, isFollowing };
+      });
+      
+      const statuses = await Promise.all(statusChecks);
+      const statusMap: Record<string, boolean> = {};
+      statuses.forEach(({ id, isFollowing }) => {
+        statusMap[id] = isFollowing;
+      });
+      setFollowingStatus(statusMap);
     } catch (error) {
       console.error('Search failed:', error);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleFollowToggle = async (channelId: string, currentlyFollowing: boolean) => {
+    setFollowActionLoading(prev => ({ ...prev, [channelId]: true }));
+    
+    try {
+      const success = currentlyFollowing 
+        ? await twitchAuthService.unfollowChannel(channelId)
+        : await twitchAuthService.followChannel(channelId);
+      
+      if (success) {
+        setFollowingStatus(prev => ({ ...prev, [channelId]: !currentlyFollowing }));
+        // Reload followed channels if we followed/unfollowed
+        if (currentlyFollowing) {
+          // Unfollowed - remove from list
+          setFollowedChannels(prev => prev.filter(c => c.id !== channelId));
+        } else {
+          // Followed - reload the list
+          const followed = await twitchAuthService.getFollowedChannels(50);
+          setFollowedChannels(followed);
+        }
+      }
+    } catch (error) {
+      console.error('Follow toggle failed:', error);
+    } finally {
+      setFollowActionLoading(prev => ({ ...prev, [channelId]: false }));
     }
   };
 
@@ -319,22 +361,49 @@ const PersonalizedFeed: React.FC<PersonalizedFeedProps> = ({ onWatch }) => {
             <h3 className="text-[9px] font-black mb-3 uppercase tracking-[0.3em] text-zinc-600">Search Results</h3>
             <div className="space-y-2">
               {searchResults.map((channel) => (
-                <button
+                <div
                   key={channel.id}
-                  onClick={() => onWatch(channel.login, true)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-all text-left"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-all"
                 >
-                  <img 
-                    src={channel.profile_image_url} 
-                    alt={channel.display_name}
-                    className="w-10 h-10 rounded-lg"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-white truncate">{channel.display_name}</h4>
-                    <p className="text-[10px] text-zinc-500 truncate">{channel.description || 'No description'}</p>
-                  </div>
-                  <ExternalLink size={14} className="text-zinc-600" />
-                </button>
+                  <button
+                    onClick={() => onWatch(channel.login, true)}
+                    className="flex items-center gap-3 flex-1 text-left min-w-0"
+                  >
+                    <img 
+                      src={channel.profile_image_url} 
+                      alt={channel.display_name}
+                      className="w-10 h-10 rounded-lg flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm text-white truncate">{channel.display_name}</h4>
+                      <p className="text-[10px] text-zinc-500 truncate">{channel.description || 'No description'}</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleFollowToggle(channel.id, followingStatus[channel.id] || false)}
+                    disabled={followActionLoading[channel.id]}
+                    className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 flex-shrink-0 ${
+                      followingStatus[channel.id]
+                        ? 'bg-zinc-800 text-zinc-400 hover:bg-red-500/20 hover:text-red-500'
+                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {followActionLoading[channel.id] ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : followingStatus[channel.id] ? (
+                      <>
+                        <UserMinus size={12} />
+                        Unfollow
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={12} />
+                        Follow
+                      </>
+                    )}
+                  </button>
+                  <ExternalLink size={14} className="text-zinc-600 flex-shrink-0" />
+                </div>
               ))}
             </div>
           </div>
