@@ -241,24 +241,76 @@ class StreamingService {
 
   /**
    * Connect to relay server for RTMP forwarding
-   * Note: This requires a backend service to handle WebRTC -> RTMP conversion
    */
   private async connectRelayServer(config: StreamConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      // For now, this is a placeholder
-      // In production, you would connect to your relay server
-      // Example: wss://your-server.com/stream
+      const relayUrl = import.meta.env.VITE_RELAY_SERVER_URL || 'ws://localhost:8080/stream';
       
-      // Since browsers can't directly push RTMP, we have two options:
-      // 1. Use a relay server (recommended)
-      // 2. Use OBS WebSocket if OBS is running locally
-      
-      console.warn('Relay server connection not implemented. Stream will be local only.');
-      console.log('To enable real streaming, deploy the nxcor-relay-server backend.');
-      console.log('Config:', { rtmpUrl: config.rtmpUrl, key: config.streamKey.substring(0, 8) + '...' });
-      
-      // Simulate connection success for now
-      setTimeout(() => resolve(), 100);
+      try {
+        this.websocket = new WebSocket(relayUrl);
+
+        this.websocket.onopen = () => {
+          console.log('Connected to relay server');
+          
+          // Send configuration
+          const configMessage = JSON.stringify({
+            rtmpUrl: config.rtmpUrl,
+            streamKey: config.streamKey,
+            platform: config.platform,
+            resolution: config.resolution,
+            fps: config.fps,
+            bitrate: config.bitrate
+          });
+          
+          this.websocket?.send(configMessage);
+        };
+
+        this.websocket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            
+            switch (message.type) {
+              case 'ready':
+                console.log('Relay server ready:', message);
+                resolve();
+                break;
+              case 'stats':
+                console.log('Stream stats:', message);
+                this.stats.fps = message.frameCount / message.duration;
+                break;
+              case 'error':
+                console.error('Relay server error:', message.message);
+                break;
+              case 'ended':
+                console.log('Stream ended by relay server');
+                this.stopStream();
+                break;
+            }
+          } catch (e) {
+            console.error('Error parsing relay message:', e);
+          }
+        };
+
+        this.websocket.onerror = (error) => {
+          console.error('Relay server connection error:', error);
+          reject(new Error('Failed to connect to relay server'));
+        };
+
+        this.websocket.onclose = () => {
+          console.log('Relay server connection closed');
+        };
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          if (this.websocket?.readyState !== WebSocket.OPEN) {
+            reject(new Error('Relay server connection timeout'));
+          }
+        }, 10000);
+
+      } catch (error) {
+        console.error('Error creating WebSocket:', error);
+        reject(error);
+      }
     });
   }
 

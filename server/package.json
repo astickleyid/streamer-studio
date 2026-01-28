@@ -1,0 +1,21 @@
+{
+  "name": "nxcor-relay-server",
+  "version": "1.0.0",
+  "description": "WebRTC to RTMP relay server for nXcor streaming",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -14,6 +14,8 @@ import Messages from './components/Messages';
 import AnalyticsComponent from './components/Analytics';
 import ViewerPage from './components/ViewerPage';
 import MultiStreamViewer from './components/MultiStreamViewer';
+import GoLiveModal from './components/GoLiveModal';
+import StreamHealthMonitor from './components/StreamHealthMonitor';
 import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConfig } from './types';
 import { Platform, PLATFORM_BADGES } from './types/unified';
 import twitchAuthService from './services/twitchAuthService';
@@ -528,6 +530,9 @@ export default function App() {
             onStreamStarted={handleStreamStarted}
           />
         )}
+
+        {/* Stream Health Monitor */}
+        {streamState.status === StreamStatus.LIVE && <StreamHealthMonitor />}
       </div>
     </div>
   );
