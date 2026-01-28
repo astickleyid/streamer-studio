@@ -1,0 +1,17 @@
+name: Auto-Deploy Notice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Server Updated
+        run: |
+          echo "✅ Server code updated!"
+          echo "📡 Render will auto-deploy from GitHub"
+          echo "🔗 Check: https://dashboard.render.com"
