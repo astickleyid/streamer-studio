@@ -4,13 +4,21 @@
 
 # nXcor Streamer Studio
 
-A professional streaming platform with AI-powered assistance, Twitch integration, and advanced broadcasting tools.
+A professional streaming platform with **real live streaming** to Twitch and YouTube, AI-powered assistance, and advanced broadcasting tools.
 
 ## ✨ Features
 
-- 🎥 Live streaming with camera and screen capture
+### 🎥 **NEW: Real Live Streaming**
+- **Stream to Twitch** - Full integration with Twitch OAuth and RTMP
+- **Stream to YouTube** - Complete YouTube Live API support
+- **Multi-platform streaming** - Go live on multiple platforms simultaneously
+- **Browser-based** - No external software needed (or use our relay server for production)
+- **Stream health monitoring** - Real-time bitrate, FPS, and connection quality
+- **Quality controls** - Configurable resolution (1080p/720p/480p), bitrate, and FPS
+
+### 🎮 Core Features
 - 🤖 AI-powered streaming suggestions using Google Gemini
-- 💜 Twitch integration and bridge
+- 💜 Twitch bridge with chat commands and OAuth
 - 🎨 Multiple scene layouts (Camera, Screen, PIP, Gaming, BRB)
 - 🎭 Visual filters and effects
 - 📊 Real-time analytics and viewer stats
@@ -23,10 +31,29 @@ A professional streaming platform with AI-powered assistance, Twitch integration
 
 ## 🚀 Quick Start
 
+### For Streaming (Full Setup)
+
+**Automated setup:**
+```bash
+./setup-streaming.sh
+```
+
+**Manual setup:**
+1. Install dependencies: `npm install && cd server && npm install`
+2. Copy `.env.example` to `.env` and add your Twitch credentials
+3. Start relay server: `cd server && npm start`
+4. Start frontend: `npm run dev`
+5. Open http://localhost:3000 and go live!
+
+📖 **Full guide:** See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for production deployment
+
+### For Development (UI Only)
+
 ### Prerequisites
 
 - Node.js (v18 or higher)
 - A Google Gemini API key ([get one here](https://aistudio.google.com/apikey))
+- (Optional) FFmpeg for streaming server
 
 ### Installation
 
