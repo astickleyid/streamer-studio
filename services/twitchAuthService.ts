@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchFollowsResponse, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
 
-const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
+const TWITCH_CLIENT_ID = import.meta.env.VITE_TWITCH_CLIENT_ID || process.env.TWITCH_CLIENT_ID || '';
 // Auto-detect redirect URI based on environment
 const getRedirectUri = () => {
-  if (process.env.TWITCH_REDIRECT_URI) {
-    return process.env.TWITCH_REDIRECT_URI;
+  if (import.meta.env.VITE_TWITCH_REDIRECT_URI || process.env.TWITCH_REDIRECT_URI) {
+    return import.meta.env.VITE_TWITCH_REDIRECT_URI || process.env.TWITCH_REDIRECT_URI;
   }
   // Auto-detect: use current origin + callback path
   if (typeof window !== 'undefined') {
@@ -102,7 +102,7 @@ export class TwitchAuthService {
         'https://id.twitch.tv/oauth2/token',
         new URLSearchParams({
           client_id: TWITCH_CLIENT_ID,
-          client_secret: process.env.TWITCH_CLIENT_SECRET || '',
+          client_secret: import.meta.env.VITE_TWITCH_CLIENT_SECRET || process.env.TWITCH_CLIENT_SECRET || '',
           code,
           grant_type: 'authorization_code',
           redirect_uri: TWITCH_REDIRECT_URI
@@ -125,7 +125,7 @@ export class TwitchAuthService {
         'https://id.twitch.tv/oauth2/token',
         new URLSearchParams({
           client_id: TWITCH_CLIENT_ID,
-          client_secret: process.env.TWITCH_CLIENT_SECRET || '',
+          client_secret: import.meta.env.VITE_TWITCH_CLIENT_SECRET || process.env.TWITCH_CLIENT_SECRET || '',
           grant_type: 'refresh_token',
           refresh_token: this.refreshToken
         })
