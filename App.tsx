@@ -42,6 +42,7 @@ export default function App() {
   const [watchingPlatform, setWatchingPlatform] = useState<Platform>('twitch');
   const [errorMsg, setErrorMsg] = useState<{ text: string, type: 'PERMISSION' | 'GENERIC' | 'COMPATIBILITY' } | null>(null);
   const [twitchCallbackHandling, setTwitchCallbackHandling] = useState(false);
+  const [showGoLiveModal, setShowGoLiveModal] = useState(false);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,17 +198,30 @@ export default function App() {
 
   const toggleStatus = () => {
     const isNowLive = streamState.status !== StreamStatus.LIVE;
-    setStreamState(prev => ({ 
-      ...prev, 
-      status: isNowLive ? StreamStatus.LIVE : StreamStatus.PREVIEW,
-      duration: isNowLive ? 0 : prev.duration
-    }));
     
     if (isNowLive) {
-      localStorage.setItem('nx_live_state', JSON.stringify({ isLive: true, title: "Pro Broadcast", category: "IRL" }));
+      // Show Go Live modal instead of instantly going live
+      setShowGoLiveModal(true);
     } else {
+      // End stream
+      streamingService.stopStream();
+      setStreamState(prev => ({ 
+        ...prev, 
+        status: StreamStatus.PREVIEW,
+        duration: 0
+      }));
       localStorage.removeItem('nx_live_state');
+      window.dispatchEvent(new Event('storage'));
     }
+  };
+
+  const handleStreamStarted = () => {
+    setStreamState(prev => ({ 
+      ...prev, 
+      status: StreamStatus.LIVE,
+      duration: 0
+    }));
+    localStorage.setItem('nx_live_state', JSON.stringify({ isLive: true, title: "Pro Broadcast", category: "IRL" }));
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -506,6 +520,14 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {/* Go Live Modal */}
+        {showGoLiveModal && (
+          <GoLiveModal
+            onClose={() => setShowGoLiveModal(false)}
+            onStreamStarted={handleStreamStarted}
+          />
+        )}
       </div>
     </div>
   );
