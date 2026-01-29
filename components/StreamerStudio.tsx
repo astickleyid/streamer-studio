@@ -12,6 +12,7 @@ import { generateStreamAssistance } from '../services/geminiService';
 import { useStreamManager } from '../contexts/StreamManagerContext';
 import StreamInfoEditor from './StreamInfoEditor';
 import StreamKeyManager from './StreamKeyManager';
+import RTMPSettingsManager from './RTMPSettingsManager';
 
 interface StreamerStudioProps {
   onEndStream: () => void;
@@ -520,19 +521,28 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
           {activeTab === 'TWITCH' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               {!isAuthenticated ? (
-                <div className="p-6 bg-purple-600/5 border border-purple-500/20 rounded-2xl text-center space-y-4">
-                  <Twitch size={48} className="text-purple-400 mx-auto" />
-                  <div>
-                    <h3 className="text-sm font-black uppercase tracking-widest text-purple-300 mb-2">Connect to Twitch</h3>
-                    <p className="text-[10px] text-zinc-400 leading-relaxed">Authenticate with your Twitch account to enable live streaming, stream management, and real-time analytics.</p>
+                <div className="space-y-6">
+                  <div className="p-6 bg-purple-600/5 border border-purple-500/20 rounded-2xl text-center space-y-4">
+                    <Twitch size={48} className="text-purple-400 mx-auto" />
+                    <div>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-purple-300 mb-2">Connect to Twitch</h3>
+                      <p className="text-[10px] text-zinc-400 leading-relaxed">Authenticate with your Twitch account to enable live streaming, stream management, and real-time analytics.</p>
+                    </div>
+                    <button 
+                      onClick={() => window.location.href = '/unified-tools'}
+                      className="w-full py-3 bg-purple-600 border border-purple-400 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-purple-500 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Twitch size={14} />
+                      Connect Twitch Account
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => window.location.href = '/unified-tools'}
-                    className="w-full py-3 bg-purple-600 border border-purple-400 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-purple-500 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Twitch size={14} />
-                    Connect Twitch Account
-                  </button>
+
+                  {/* nXcor Native RTMP Settings - Available without Twitch */}
+                  <div className="space-y-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Native RTMP (OBS)</p>
+                    
+                    <RTMPSettingsManager />
+                  </div>
                 </div>
               ) : (
                 <>
@@ -597,6 +607,13 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
                     </button>
 
                     <StreamKeyManager />
+                  </div>
+
+                  {/* nXcor Native RTMP Settings */}
+                  <div className="space-y-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Native RTMP (OBS)</p>
+                    
+                    <RTMPSettingsManager />
                   </div>
 
                   {/* Quick Actions */}
