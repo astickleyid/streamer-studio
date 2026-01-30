@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchFollowsResponse, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
+import { TwitchUser, TwitchTokenResponse, TwitchStreamInfo, TwitchChannel, TwitchFollowedChannel, TwitchFollowsResponse, TwitchVideo, TwitchClip, TwitchGame } from '../types/twitch';
 
 const TWITCH_CLIENT_ID = import.meta.env.VITE_TWITCH_CLIENT_ID || process.env.TWITCH_CLIENT_ID || '';
 // Auto-detect redirect URI based on environment
@@ -462,6 +462,32 @@ export class TwitchAuthService {
       ).slice(0, limit);
     } catch (error) {
       console.error('Failed to fetch followed channels clips:', error);
+      return [];
+    }
+  }
+
+  async searchCategories(query: string, signal?: AbortSignal): Promise<TwitchGame[]> {
+    const token = await this.getValidToken();
+    if (!token) return [];
+
+    try {
+      const response = await axios.get<{ data: TwitchGame[] }>(
+        `https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': TWITCH_CLIENT_ID
+          },
+          signal
+        }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      if (axios.isCancel(error) || (error as any).name === 'AbortError' || (error as any).name === 'CanceledError') {
+        throw error;
+      }
+      console.error('Failed to search categories:', error);
       return [];
     }
   }
