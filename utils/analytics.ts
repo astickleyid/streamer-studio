@@ -47,8 +47,8 @@ function sendToAnalytics(metric: any) {
     });
   }
 
-  // Send to analytics endpoint (only in production)
-  if (typeof import.meta !== 'undefined' && import.meta.env?.PROD && navigator.sendBeacon) {
-    navigator.sendBeacon('/api/analytics', body);
-  }
+  // Send to analytics endpoint (disabled - no backend endpoint)
+  // if (typeof import.meta !== 'undefined' && import.meta.env?.PROD && navigator.sendBeacon) {
+  //   navigator.sendBeacon('/api/analytics', body);
+  // }
 }
