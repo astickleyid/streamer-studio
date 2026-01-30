@@ -67,7 +67,7 @@ describe('StreamInfoEditor - Category Search with Debouncing', () => {
     vi.useFakeTimers();
     const mockSearchCategories = vi.mocked(TwitchAuthService.searchCategories);
     mockSearchCategories.mockResolvedValue([
-      { id: '1', name: 'Just Chatting', box_art_url: '' }
+      { id: '1', name: 'Just Chatting', box_art_url: '', igdb_id: '' }
     ]);
     
     renderComponent();
@@ -126,8 +126,8 @@ describe('StreamInfoEditor - Category Search with Debouncing', () => {
   it('displays search results after successful search', async () => {
     const mockSearchCategories = vi.mocked(TwitchAuthService.searchCategories);
     mockSearchCategories.mockResolvedValue([
-      { id: '1', name: 'Just Chatting', box_art_url: '' },
-      { id: '2', name: 'Gaming', box_art_url: '' }
+      { id: '1', name: 'Just Chatting', box_art_url: '', igdb_id: '' },
+      { id: '2', name: 'Gaming', box_art_url: '', igdb_id: '' }
     ]);
     
     renderComponent();
@@ -162,7 +162,7 @@ describe('StreamInfoEditor - Category Search with Debouncing', () => {
   it('clears results when category is selected', async () => {
     const mockSearchCategories = vi.mocked(TwitchAuthService.searchCategories);
     mockSearchCategories.mockResolvedValue([
-      { id: '1', name: 'Just Chatting', box_art_url: '' }
+      { id: '1', name: 'Just Chatting', box_art_url: '', igdb_id: '' }
     ]);
     
     renderComponent();

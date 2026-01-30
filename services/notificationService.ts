@@ -1,4 +1,5 @@
-import { Notification, NotificationPreferences, NotificationType, DEFAULT_NOTIFICATION_PREFERENCES } from '../types/notification';
+import type { Notification, NotificationPreferences, NotificationType } from '../types/notification';
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../types/notification';
 import followingService from './followingService';
 
 class NotificationService {

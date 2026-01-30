@@ -20,6 +20,7 @@ import { StreamStatus, GlobalStreamState, StreamScene, StreamFilter, OverlayConf
 import { Platform, PLATFORM_BADGES } from './types/unified';
 import twitchAuthService from './services/twitchAuthService';
 import unifiedStreamService from './services/unifiedStreamService';
+import streamingService from './services/streamingService';
 import { reportWebVitals } from './utils/analytics';
 
 enum ViewMode {
