@@ -155,14 +155,14 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
       <div className="flex-1 relative flex flex-col p-2 lg:p-4 min-h-0 bg-[#070707]">
         
         {/* Top HUD */}
-        <div className="flex items-center justify-between mb-2 px-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border transition-colors flex items-center gap-1.5 ${globalState.status === StreamStatus.LIVE ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}>
+        <div className="flex items-center justify-between mb-2 px-2 shrink-0 flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border transition-colors flex items-center gap-1.5 whitespace-nowrap ${globalState.status === StreamStatus.LIVE ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}>
               {globalState.status === StreamStatus.LIVE && <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />}
               {globalState.status === StreamStatus.LIVE ? 'Transmitting 4K' : 'Preview Active'}
             </div>
             {globalState.status === StreamStatus.LIVE && (
-              <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-md border border-white/5 text-[9px] font-mono text-white tracking-tighter">
+              <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-md border border-white/5 text-[9px] font-mono text-white tracking-tighter whitespace-nowrap">
                 <Clock size={10} className="text-zinc-500"/> {formatTime(globalState.duration)}
                 <div className="w-px h-2 bg-zinc-800" />
                 <Users size={10} className="text-indigo-400" /> 2,410
@@ -170,12 +170,13 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
              {isAuthenticated && twitchStream && (
-               <div className="flex items-center gap-2 bg-purple-500/10 px-3 py-1 rounded-md border border-purple-500/20 text-[9px] font-black text-purple-400 uppercase tracking-widest">
+               <div className="flex items-center gap-2 bg-purple-500/10 px-3 py-1 rounded-md border border-purple-500/20 text-[9px] font-black text-purple-400 uppercase tracking-widest whitespace-nowrap">
                  <Twitch size={12} />
                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
-                 LIVE ON TWITCH
+                 <span className="hidden sm:inline">LIVE ON TWITCH</span>
+                 <span className="sm:hidden">LIVE</span>
                  <div className="w-px h-2 bg-purple-500/20 ml-1" />
                  {twitchStream.viewer_count} viewers
                </div>
@@ -183,14 +184,16 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
              {isAuthenticated && (
                <button 
                  onClick={() => setShowStreamInfoEditor(true)}
-                 className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-purple-500/40 rounded-md font-black text-[9px] uppercase tracking-widest transition-all text-zinc-400 hover:text-purple-400 flex items-center gap-1"
+                 className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-purple-500/40 rounded-md font-black text-[9px] uppercase tracking-widest transition-all text-zinc-400 hover:text-purple-400 flex items-center gap-1 whitespace-nowrap"
                >
                  <Edit3 size={12} />
-                 Stream Info
+                 <span className="hidden sm:inline">Stream Info</span>
+                 <span className="sm:hidden">Info</span>
                </button>
              )}
-             <button onClick={onToggleStatus} className={`px-4 py-1.5 rounded-md font-black text-[9px] uppercase tracking-widest transition-all ${globalState.status === StreamStatus.LIVE ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-indigo-600 text-white shadow-lg hover:bg-indigo-500'}`}>
-              {globalState.status === StreamStatus.LIVE ? 'End Broadcast' : 'Start Transmission'}
+             <button onClick={onToggleStatus} className={`px-4 py-1.5 rounded-md font-black text-[9px] uppercase tracking-widest transition-all whitespace-nowrap ${globalState.status === StreamStatus.LIVE ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-indigo-600 text-white shadow-lg hover:bg-indigo-500'}`}>
+              <span className="hidden sm:inline">{globalState.status === StreamStatus.LIVE ? 'End Broadcast' : 'Start Transmission'}</span>
+              <span className="sm:hidden">{globalState.status === StreamStatus.LIVE ? 'End' : 'Start'}</span>
             </button>
           </div>
         </div>
@@ -293,8 +296,8 @@ const StreamerStudio: React.FC<StreamerStudioProps> = ({
             {/* LAYER 3: Scrolling Ticker */}
             {globalState.overlays.showTicker && (
               <div className="absolute bottom-0 left-0 w-full h-8 bg-black/80 backdrop-blur-md border-t border-white/5 flex items-center overflow-hidden z-30">
-                <div className="whitespace-nowrap animate-ticker flex items-center gap-12">
-                   {[...Array(4)].map((_, i) => (
+                <div className="whitespace-nowrap animate-ticker inline-flex items-center gap-12">
+                   {[...Array(8)].map((_, i) => (
                      <span key={i} className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">
                        {globalState.overlays.tickerText}
                      </span>
