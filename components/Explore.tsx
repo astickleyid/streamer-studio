@@ -227,8 +227,8 @@ const Explore: React.FC<ExploreProps> = ({ onWatch }) => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3 flex-wrap">
               <div className="w-1 h-6 bg-yellow-400 rounded-full flex-shrink-0"></div>
-              <span className="flex items-center gap-2 flex-shrink-0">{getIcon()}</span>
-              <span className="break-words">{getTitle()}</span>
+              {getIcon()}
+              <span className="whitespace-nowrap">{getTitle()}</span>
               <span className="text-zinc-700 text-base whitespace-nowrap">({displayStreams.length})</span>
             </h2>
           </div>
