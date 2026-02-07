@@ -344,14 +344,14 @@ export default function App() {
           <div className="h-1 bg-red-600 animate-pulse z-[200]" />
         )}
         
-        <header className="h-14 md:h-16 border-b border-zinc-900 flex items-center justify-between px-4 md:px-8 bg-[#050505] flex-shrink-0 z-50">
-          <div className="flex-1 max-w-xl flex items-center gap-4">
-             <div className="hidden md:block w-8 h-8 rounded-lg bg-yellow-400 p-1">
+        <header className="h-14 md:h-16 border-b border-zinc-900 flex items-center justify-between px-4 md:px-8 bg-[#050505] flex-shrink-0 z-50 gap-4">
+          <div className="flex-1 max-w-xl flex items-center gap-2 md:gap-4 min-w-0">
+             <div className="hidden md:block w-8 h-8 rounded-lg bg-yellow-400 p-1 flex-shrink-0">
                 <div className="w-full h-full bg-black rounded flex items-center justify-center font-black text-yellow-400 text-[10px]">NX</div>
              </div>
              
-             <form onSubmit={handleSearchSubmit} className="relative flex-1 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
+             <form onSubmit={handleSearchSubmit} className="relative flex-1 group min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 flex-shrink-0" size={14} />
               <input 
                 type="text" 
                 value={searchQuery}
@@ -442,25 +442,26 @@ export default function App() {
             </form>
           </div>
           
-          <div className="flex items-center gap-3 ml-4">
+          <div className="flex items-center gap-2 md:gap-3 ml-auto flex-shrink-0">
              {streamState.twitchLinked && (
-                <div className="hidden lg:flex items-center gap-2 px-3 h-8 bg-purple-500/10 border border-purple-500/20 rounded-lg text-[9px] font-black text-purple-400 uppercase tracking-widest">
+                <div className="hidden lg:flex items-center gap-2 px-3 h-8 bg-purple-500/10 border border-purple-500/20 rounded-lg text-[9px] font-black text-purple-400 uppercase tracking-widest whitespace-nowrap">
                    <div className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-                   Twitch Bridge Active
+                   <span className="hidden xl:inline">Twitch Bridge Active</span>
+                   <span className="xl:hidden">Twitch</span>
                 </div>
              )}
              <button 
                 onClick={() => setCurrentView(ViewMode.MULTISTREAM)}
-                className="hidden md:flex items-center gap-2 px-4 h-8 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-[9px] font-black text-yellow-400 uppercase tracking-widest hover:bg-yellow-400 hover:text-black transition-all"
+                className="hidden md:flex items-center gap-2 px-3 md:px-4 h-8 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-[9px] font-black text-yellow-400 uppercase tracking-widest hover:bg-yellow-400 hover:text-black transition-all whitespace-nowrap"
                 title="Multi-Stream Viewer"
              >
                 <Grid size={14} />
-                Multi-View
+                <span className="hidden lg:inline">Multi-View</span>
              </button>
-             <button className="text-zinc-600 hover:text-white transition-all">
+             <button className="text-zinc-600 hover:text-white transition-all flex-shrink-0">
                <Bell size={18} />
              </button>
-             <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-yellow-400 font-black text-[10px] cursor-pointer hover:border-yellow-400 transition-all" onClick={() => setCurrentView(ViewMode.PROFILE)}>
+             <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-yellow-400 font-black text-[10px] cursor-pointer hover:border-yellow-400 transition-all flex-shrink-0" onClick={() => setCurrentView(ViewMode.PROFILE)}>
                NX
              </div>
           </div>

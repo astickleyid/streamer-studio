@@ -127,11 +127,11 @@ const Explore: React.FC<ExploreProps> = ({ onWatch }) => {
         
         {/* Header with LEMON BRANDING */}
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center flex-shrink-0">
               <Sparkles className="text-black" size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter text-white">
                 Explore Streams
               </h1>
@@ -143,7 +143,7 @@ const Explore: React.FC<ExploreProps> = ({ onWatch }) => {
 
           {/* Search Bar */}
           <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 flex-shrink-0" size={20} />
             <input
               type="text"
               value={searchQuery}
@@ -224,12 +224,12 @@ const Explore: React.FC<ExploreProps> = ({ onWatch }) => {
 
         {/* Results Section */}
         <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-              <div className="w-1 h-6 bg-yellow-400 rounded-full"></div>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3 flex-wrap">
+              <div className="w-1 h-6 bg-yellow-400 rounded-full flex-shrink-0"></div>
               {getIcon()}
-              {getTitle()}
-              <span className="text-zinc-700 text-base">({displayStreams.length})</span>
+              <span className="whitespace-nowrap">{getTitle()}</span>
+              <span className="text-zinc-700 text-base whitespace-nowrap">({displayStreams.length})</span>
             </h2>
           </div>
 

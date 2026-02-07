@@ -108,11 +108,11 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
         
         {/* Platform Filter Bar with LEMON BRANDING */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center flex-shrink-0">
               <span className="font-black text-black text-sm">NX</span>
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white">Your Feed</h1>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Universal Streaming Hub</p>
             </div>
@@ -121,25 +121,27 @@ const Home: React.FC<HomeProps> = ({ onWatch }) => {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${
                 showSettings
                   ? 'bg-yellow-400 text-black'
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
               }`}
             >
               <Settings size={12} />
-              Feed Settings
+              <span className="hidden sm:inline">Feed Settings</span>
+              <span className="sm:hidden">Settings</span>
               <ChevronDown size={12} className={`transition-transform ${showSettings ? 'rotate-180' : ''}`} />
             </button>
             <button
               onClick={() => setPlatformFilter('all')}
-              className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
+              className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
                 platformFilter === 'all'
                   ? 'bg-yellow-400 text-black'
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
               }`}
             >
-              All Platforms
+              <span className="hidden sm:inline">All Platforms</span>
+              <span className="sm:hidden">All</span>
             </button>
             <button
               onClick={() => setPlatformFilter('native')}
